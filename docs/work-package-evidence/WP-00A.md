@@ -64,17 +64,17 @@ completed_at: "2026-09-15T07:59:38Z"
 
 ## 验证记录
 
-| 命令                                           | 结果 | 关键输出                                                                                                           |
-| ---------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ |
-| `./scripts/check-work-package-ready.sh WP-00A` | PASS | `READY WP-00A`                                                                                                     |
-| `pnpm install --frozen-lockfile`               | PASS | lockfile up to date; `Done ... using pnpm v12.4.1`                                                                 |
-| `pnpm lint`                                    | PASS | `lint passed: 15 workspace package manifests checked`                                                              |
-| `pnpm format`                                  | PASS | `All matched files use Prettier code style!`                                                                       |
-| `pnpm typecheck`                               | PASS | `tsc --build tsconfig.packages.json`                                                                               |
-| `pnpm test`                                    | PASS | `tests/architecture/domain-boundaries.test.ts (1 test)`                                                            |
-| `pnpm build`                                   | PASS | 4 apps and 11 packages completed `tsc --build`                                                                     |
+| 命令                                             | 结果   | 关键输出                                                                                            |
+| ---------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------- |
+| `./scripts/check-work-package-ready.sh WP-00A` | PASS | `READY WP-00A`                                                                                  |
+| `pnpm install --frozen-lockfile`               | PASS | lockfile up to date; `Done ... using pnpm v12.4.1`                                              |
+| `pnpm lint`                                    | PASS | `lint passed: 15 workspace package manifests checked`                                           |
+| `pnpm format`                                  | PASS | `All matched files use Prettier code style!`                                                    |
+| `pnpm typecheck`                               | PASS | `tsc --build tsconfig.packages.json`                                                            |
+| `pnpm test`                                    | PASS | `tests/architecture/domain-boundaries.test.ts (1 test)`                                         |
+| `pnpm build`                                   | PASS | 4 apps and 11 packages completed `tsc --build`                                                  |
 | negative architecture probe                    | PASS | 临时在 `packages/domain/src/index.ts` 导入 `@modular-mcp/database` 时，`pnpm test` 失败并报告该 import；恢复后通过 |
-| `pnpm verify`                                  | PASS | lint、typecheck、test、build 全部通过                                                                              |
+| `pnpm verify`                                  | PASS | lint、typecheck、test、build 全部通过                                                                  |
 
 注：本环境普通沙箱无 npm registry DNS；依赖安装命令在授权网络下完成。新 clone 不需要 Secret，但需要常规 npm registry 访问或预热 pnpm store。
 
