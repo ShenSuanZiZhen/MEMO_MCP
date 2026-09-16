@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "QUOTA_EXCEEDED",
+    "category": "QUOTA",
+    "message": "The current quota has been reached.",
+    "retryable": false,
+    "nextAction": "Wait for the quota reset or contact an administrator."
+  }
+}

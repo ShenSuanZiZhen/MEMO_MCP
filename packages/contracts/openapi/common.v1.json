@@ -1,0 +1,252 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Modular MCP Common Contract Primitives",
+    "version": "1.0.0"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "OpaqueId": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/OpaqueId",
+        "type": "string",
+        "description": "Opaque application identifier. Clients must not parse embedded meaning from it.",
+        "minLength": 10,
+        "maxLength": 160,
+        "pattern": "^[a-z][a-z0-9]*_[A-Za-z0-9_-]{8,128}$",
+        "examples": ["ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"]
+      },
+      "UtcDateTime": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/UtcDateTime",
+        "type": "string",
+        "description": "RFC3339 timestamp normalized to UTC with a trailing Z.",
+        "format": "date-time",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+        "examples": ["2026-09-16T06:30:21Z"]
+      },
+      "RequestId": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/RequestId",
+        "allOf": [{ "$ref": "#/components/schemas/OpaqueId" }],
+        "description": "Opaque request correlation identifier."
+      },
+      "TraceId": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/TraceId",
+        "type": "string",
+        "description": "Trace correlation identifier emitted by observability tooling.",
+        "minLength": 8,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "examples": ["trace_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"]
+      },
+      "Cursor": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/Cursor",
+        "type": "string",
+        "description": "Opaque stable pagination cursor. Clients must not treat it as a database offset.",
+        "minLength": 12,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z0-9._~-]+$",
+        "examples": ["cur_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"]
+      },
+      "CursorPaginationRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/CursorPaginationRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cursor": { "$ref": "#/components/schemas/Cursor" },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        }
+      },
+      "PageInfo": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/PageInfo",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["hasMore"],
+        "properties": {
+          "hasMore": { "type": "boolean" },
+          "nextCursor": { "$ref": "#/components/schemas/Cursor" }
+        }
+      },
+      "CursorPage": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/CursorPage",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "pageInfo": { "$ref": "#/components/schemas/PageInfo" }
+        }
+      },
+      "JobStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/JobStatus",
+        "type": "string",
+        "enum": ["accepted", "running", "succeeded", "failed", "cancelled"]
+      },
+      "AcceptedJobResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/AcceptedJobResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["jobId", "status", "statusUrl"],
+        "properties": {
+          "jobId": { "$ref": "#/components/schemas/OpaqueId" },
+          "status": { "$ref": "#/components/schemas/JobStatus" },
+          "statusUrl": {
+            "type": "string",
+            "description": "Relative API path where the job can be polled.",
+            "pattern": "^/api/v1/jobs/[A-Za-z0-9_-]+$"
+          }
+        }
+      },
+      "Job": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/Job",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["jobId", "requestId", "status", "createdAt", "updatedAt"],
+        "properties": {
+          "jobId": { "$ref": "#/components/schemas/OpaqueId" },
+          "requestId": { "$ref": "#/components/schemas/RequestId" },
+          "status": { "$ref": "#/components/schemas/JobStatus" },
+          "createdAt": { "$ref": "#/components/schemas/UtcDateTime" },
+          "updatedAt": { "$ref": "#/components/schemas/UtcDateTime" },
+          "retryable": { "type": "boolean" },
+          "resultUrl": {
+            "type": "string",
+            "pattern": "^/api/v1/.+"
+          },
+          "error": { "$ref": "#/components/schemas/ErrorEnvelope" }
+        }
+      },
+      "ErrorCode": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/ErrorCode",
+        "type": "string",
+        "enum": [
+          "AUTHN_SESSION_EXPIRED",
+          "AUTHZ_NOT_FOUND_OR_DENIED",
+          "DATA_UPLOAD_INTERRUPTED",
+          "DATA_FILE_QUARANTINED",
+          "DATA_PARSE_PARTIAL",
+          "DATA_CONNECTION_FAILED",
+          "MODULE_DEPENDENCY_MISSING",
+          "MODULE_CONFLICT",
+          "DEFINITION_LIMIT_EXCEEDED",
+          "DEFINITION_INVALID_REQUEST",
+          "TEST_RUN_FAILED",
+          "DEPLOY_DEFINITION_MISMATCH",
+          "QUOTA_EXCEEDED",
+          "DEPENDENCY_UNAVAILABLE"
+        ]
+      },
+      "ErrorCategory": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/ErrorCategory",
+        "type": "string",
+        "enum": [
+          "AUTHN",
+          "AUTHZ",
+          "DATA",
+          "MODULE",
+          "DEFINITION",
+          "TEST",
+          "DEPLOY",
+          "QUOTA",
+          "DEPENDENCY"
+        ]
+      },
+      "ErrorDetails": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/ErrorDetails",
+        "type": "object",
+        "description": "Structured, sanitized error context. It must not include stack, stackTrace, cause, secret, credential, rawBody, query, or full URL fields.",
+        "additionalProperties": true
+      },
+      "Error": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/Error",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "category",
+          "message",
+          "requestId",
+          "retryable",
+          "nextAction"
+        ],
+        "properties": {
+          "code": { "$ref": "#/components/schemas/ErrorCode" },
+          "category": { "$ref": "#/components/schemas/ErrorCategory" },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "requestId": { "$ref": "#/components/schemas/RequestId" },
+          "retryable": { "type": "boolean" },
+          "nextAction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "details": { "$ref": "#/components/schemas/ErrorDetails" }
+        }
+      },
+      "ErrorEnvelope": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/ErrorEnvelope",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": { "$ref": "#/components/schemas/Error" }
+        }
+      },
+      "DomainEventEnvelope": {
+        "$id": "https://contracts.modular-mcp.local/schemas/common/v1/DomainEventEnvelope",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "eventType",
+          "occurredAt",
+          "workspaceId",
+          "projectId",
+          "aggregateId",
+          "aggregateVersion",
+          "traceId",
+          "idempotencyKey",
+          "data"
+        ],
+        "properties": {
+          "eventId": { "$ref": "#/components/schemas/OpaqueId" },
+          "eventType": {
+            "type": "string",
+            "pattern": "^[a-z]+(?:\\.[a-z]+)*\\.v[0-9]+$"
+          },
+          "occurredAt": { "$ref": "#/components/schemas/UtcDateTime" },
+          "workspaceId": { "$ref": "#/components/schemas/OpaqueId" },
+          "projectId": { "$ref": "#/components/schemas/OpaqueId" },
+          "aggregateId": { "$ref": "#/components/schemas/OpaqueId" },
+          "aggregateVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "traceId": { "$ref": "#/components/schemas/TraceId" },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 160,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

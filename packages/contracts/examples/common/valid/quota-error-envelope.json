@@ -1,0 +1,13 @@
+{
+  "error": {
+    "code": "QUOTA_EXCEEDED",
+    "category": "QUOTA",
+    "message": "The current quota has been reached.",
+    "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+    "retryable": false,
+    "nextAction": "Wait for the quota reset or contact an administrator.",
+    "details": {
+      "resetAt": "2026-09-17T00:00:00Z"
+    }
+  }
+}

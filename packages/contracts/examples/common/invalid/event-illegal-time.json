@@ -1,0 +1,12 @@
+{
+  "eventId": "evt_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "eventType": "data.version.completed.v1",
+  "occurredAt": "2026-09-16T14:30:21+08:00",
+  "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "aggregateId": "dv_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "aggregateVersion": 4,
+  "traceId": "trace_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "idempotencyKey": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "data": {}
+}

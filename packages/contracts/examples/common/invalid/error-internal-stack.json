@@ -1,0 +1,13 @@
+{
+  "error": {
+    "code": "DEPENDENCY_UNAVAILABLE",
+    "category": "DEPENDENCY",
+    "message": "A dependency is unavailable.",
+    "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+    "retryable": true,
+    "nextAction": "Retry after the dependency recovers.",
+    "details": {
+      "stack": "Error: internal implementation stack must never be exposed"
+    }
+  }
+}

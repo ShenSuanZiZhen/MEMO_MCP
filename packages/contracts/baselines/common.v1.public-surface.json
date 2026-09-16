@@ -1,0 +1,268 @@
+{
+  "AcceptedJobResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "jobId": {
+        "ref": "#/components/schemas/OpaqueId"
+      },
+      "status": {
+        "ref": "#/components/schemas/JobStatus"
+      },
+      "statusUrl": {
+        "pattern": "^/api/v1/jobs/[A-Za-z0-9_-]+$",
+        "type": "string"
+      }
+    },
+    "required": ["jobId", "status", "statusUrl"],
+    "type": "object"
+  },
+  "Cursor": {
+    "maxLength": 512,
+    "minLength": 12,
+    "pattern": "^[A-Za-z0-9._~-]+$",
+    "type": "string"
+  },
+  "CursorPage": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "CursorPaginationRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "cursor": {
+        "ref": "#/components/schemas/Cursor"
+      },
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  },
+  "DomainEventEnvelope": {
+    "additionalProperties": false,
+    "properties": {
+      "aggregateId": {
+        "ref": "#/components/schemas/OpaqueId"
+      },
+      "aggregateVersion": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "data": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "eventId": {
+        "ref": "#/components/schemas/OpaqueId"
+      },
+      "eventType": {
+        "pattern": "^[a-z]+(?:\\.[a-z]+)*\\.v[0-9]+$",
+        "type": "string"
+      },
+      "idempotencyKey": {
+        "maxLength": 160,
+        "minLength": 12,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "type": "string"
+      },
+      "occurredAt": {
+        "ref": "#/components/schemas/UtcDateTime"
+      },
+      "projectId": {
+        "ref": "#/components/schemas/OpaqueId"
+      },
+      "traceId": {
+        "ref": "#/components/schemas/TraceId"
+      },
+      "workspaceId": {
+        "ref": "#/components/schemas/OpaqueId"
+      }
+    },
+    "required": [
+      "aggregateId",
+      "aggregateVersion",
+      "data",
+      "eventId",
+      "eventType",
+      "idempotencyKey",
+      "occurredAt",
+      "projectId",
+      "traceId",
+      "workspaceId"
+    ],
+    "type": "object"
+  },
+  "Error": {
+    "additionalProperties": false,
+    "properties": {
+      "category": {
+        "ref": "#/components/schemas/ErrorCategory"
+      },
+      "code": {
+        "ref": "#/components/schemas/ErrorCode"
+      },
+      "details": {
+        "ref": "#/components/schemas/ErrorDetails"
+      },
+      "message": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "nextAction": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "requestId": {
+        "ref": "#/components/schemas/RequestId"
+      },
+      "retryable": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "category",
+      "code",
+      "message",
+      "nextAction",
+      "requestId",
+      "retryable"
+    ],
+    "type": "object"
+  },
+  "ErrorCategory": {
+    "enum": [
+      "AUTHN",
+      "AUTHZ",
+      "DATA",
+      "DEFINITION",
+      "DEPENDENCY",
+      "DEPLOY",
+      "MODULE",
+      "QUOTA",
+      "TEST"
+    ],
+    "type": "string"
+  },
+  "ErrorCode": {
+    "enum": [
+      "AUTHN_SESSION_EXPIRED",
+      "AUTHZ_NOT_FOUND_OR_DENIED",
+      "DATA_CONNECTION_FAILED",
+      "DATA_FILE_QUARANTINED",
+      "DATA_PARSE_PARTIAL",
+      "DATA_UPLOAD_INTERRUPTED",
+      "DEFINITION_INVALID_REQUEST",
+      "DEFINITION_LIMIT_EXCEEDED",
+      "DEPENDENCY_UNAVAILABLE",
+      "DEPLOY_DEFINITION_MISMATCH",
+      "MODULE_CONFLICT",
+      "MODULE_DEPENDENCY_MISSING",
+      "QUOTA_EXCEEDED",
+      "TEST_RUN_FAILED"
+    ],
+    "type": "string"
+  },
+  "ErrorDetails": {
+    "additionalProperties": true,
+    "type": "object"
+  },
+  "ErrorEnvelope": {
+    "additionalProperties": false,
+    "properties": {
+      "error": {
+        "ref": "#/components/schemas/Error"
+      }
+    },
+    "required": ["error"],
+    "type": "object"
+  },
+  "Job": {
+    "additionalProperties": false,
+    "properties": {
+      "createdAt": {
+        "ref": "#/components/schemas/UtcDateTime"
+      },
+      "error": {
+        "ref": "#/components/schemas/ErrorEnvelope"
+      },
+      "jobId": {
+        "ref": "#/components/schemas/OpaqueId"
+      },
+      "requestId": {
+        "ref": "#/components/schemas/RequestId"
+      },
+      "resultUrl": {
+        "pattern": "^/api/v1/.+",
+        "type": "string"
+      },
+      "retryable": {
+        "type": "boolean"
+      },
+      "status": {
+        "ref": "#/components/schemas/JobStatus"
+      },
+      "updatedAt": {
+        "ref": "#/components/schemas/UtcDateTime"
+      }
+    },
+    "required": ["createdAt", "jobId", "requestId", "status", "updatedAt"],
+    "type": "object"
+  },
+  "JobStatus": {
+    "enum": ["accepted", "cancelled", "failed", "running", "succeeded"],
+    "type": "string"
+  },
+  "OpaqueId": {
+    "maxLength": 160,
+    "minLength": 10,
+    "pattern": "^[a-z][a-z0-9]*_[A-Za-z0-9_-]{8,128}$",
+    "type": "string"
+  },
+  "PageInfo": {
+    "additionalProperties": false,
+    "properties": {
+      "hasMore": {
+        "type": "boolean"
+      },
+      "nextCursor": {
+        "ref": "#/components/schemas/Cursor"
+      }
+    },
+    "required": ["hasMore"],
+    "type": "object"
+  },
+  "RequestId": {
+    "allOf": [
+      {
+        "ref": "#/components/schemas/OpaqueId"
+      }
+    ]
+  },
+  "TraceId": {
+    "maxLength": 128,
+    "minLength": 8,
+    "pattern": "^[A-Za-z0-9._:-]+$",
+    "type": "string"
+  },
+  "UtcDateTime": {
+    "format": "date-time",
+    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+    "type": "string"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "valid": [
+    {
+      "schema": "AcceptedJobResponse",
+      "path": "valid/accepted-job-response.json"
+    },
+    {
+      "schema": "CursorPage",
+      "path": "valid/cursor-page.json"
+    },
+    {
+      "schema": "DomainEventEnvelope",
+      "path": "valid/domain-event-envelope.json"
+    },
+    {
+      "schema": "ErrorEnvelope",
+      "path": "valid/quota-error-envelope.json"
+    }
+  ],
+  "invalid": [
+    {
+      "schema": "ErrorEnvelope",
+      "path": "invalid/error-missing-request-id.json",
+      "reason": "required requestId must be enforced"
+    },
+    {
+      "schema": "DomainEventEnvelope",
+      "path": "invalid/event-illegal-time.json",
+      "reason": "timestamps must be RFC3339 UTC"
+    },
+    {
+      "schema": "ErrorEnvelope",
+      "path": "invalid/error-internal-stack.json",
+      "reason": "internal stack fields must not be accepted"
+    }
+  ]
+}
