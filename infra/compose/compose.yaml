@@ -1,0 +1,199 @@
+name: ${MCP_COMPOSE_PROJECT:-modular-mcp}
+
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mcp_control}
+      POSTGRES_USER: ${POSTGRES_USER:-mcp_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mcp_dev_password}
+    ports:
+      - "127.0.0.1:${MCP_POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  redis:
+    image: redis:7.4.0-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "127.0.0.1:${MCP_REDIS_PORT:-16379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-08-26T15-33-07Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-mcp_dev_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-mcp_dev_minio_password}
+    ports:
+      - "127.0.0.1:${MCP_MINIO_API_PORT:-19000}:9000"
+      - "127.0.0.1:${MCP_MINIO_CONSOLE_PORT:-19001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2024-08-26T10-49-58Z
+    profiles: ["init"]
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-mcp_dev_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-mcp_dev_minio_password}
+      MINIO_BUCKET: ${MINIO_BUCKET:-mcp-dev-artifacts}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing "local/$${MINIO_BUCKET}"
+        mc anonymous set none "local/$${MINIO_BUCKET}"
+
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "false"
+    ports:
+      - "127.0.0.1:${MCP_OPENSEARCH_PORT:-19200}:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow\\&timeout=5s >/dev/null",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 45s
+
+  opensearch-init:
+    image: curlimages/curl:8.10.1
+    profiles: ["init"]
+    restart: "no"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    environment:
+      OPENSEARCH_INDEX: ${OPENSEARCH_INDEX:-mcp-dev-smoke}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if curl -fsS -o /dev/null "http://opensearch:9200/$${OPENSEARCH_INDEX}"; then
+          exit 0
+        fi
+        curl -fsS -XPUT "http://opensearch:9200/$${OPENSEARCH_INDEX}" \
+          -H "Content-Type: application/json" \
+          -d '{"settings":{"index.number_of_shards":1,"index.number_of_replicas":0},"mappings":{"properties":{"workspace_id":{"type":"keyword"},"created_at":{"type":"date"}}}}'
+
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_SEEDS: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-mcp_dev}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:-mcp_dev_password}
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
+    volumes:
+      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig:ro
+    ports:
+      - "127.0.0.1:${MCP_TEMPORAL_PORT:-17233}:7233"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'temporal operator cluster health --address "$(hostname -i):7233" >/dev/null 2>&1 || tctl --address "$(hostname -i):7233" cluster health >/dev/null 2>&1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 45s
+
+  opa:
+    image: openpolicyagent/opa:0.68.0
+    platform: linux/amd64
+    restart: unless-stopped
+    command:
+      [
+        "run",
+        "--server",
+        "--addr=0.0.0.0:8181",
+        "--diagnostic-addr=0.0.0.0:8282",
+        "/policies",
+      ]
+    ports:
+      - "127.0.0.1:${MCP_OPA_PORT:-18181}:8181"
+    volumes:
+      - ./opa/policies:/policies:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/opa",
+          "eval",
+          "--fail",
+          "--data",
+          "/policies",
+          "data.mcp.local.health.ready == true",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  otel:
+    image: otel/opentelemetry-collector-contrib:0.107.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "127.0.0.1:${MCP_OTEL_GRPC_PORT:-14317}:4317"
+      - "127.0.0.1:${MCP_OTEL_HTTP_PORT:-14318}:4318"
+      - "127.0.0.1:${MCP_OTEL_HEALTH_PORT:-13133}:13133"
+    volumes:
+      - ./otel/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  opensearch-data:
