@@ -1,0 +1,39 @@
+{
+  "registryVersion": "1.0.0",
+  "canonicalization": {
+    "algorithm": "RFC8785-or-equivalent-stable-json",
+    "inputBoundary": "ServiceDefinitionV1 JSON after schema validation, domain validation, exact module resolution, effective limit calculation, and tool/resource/prompt compilation.",
+    "digest": "sha256"
+  },
+  "schemas": [
+    {
+      "name": "ServiceDefinitionV1",
+      "uri": "https://contracts.modular-mcp.local/schemas/definition/v1/ServiceDefinition",
+      "path": "v1/definition.v1.schema.json#/$defs/ServiceDefinition"
+    },
+    {
+      "name": "ModuleManifestV1",
+      "uri": "https://contracts.modular-mcp.local/schemas/definition/v1/ModuleManifest",
+      "path": "v1/definition.v1.schema.json#/$defs/ModuleManifest"
+    },
+    {
+      "name": "PolicyInputV1",
+      "uri": "https://contracts.modular-mcp.local/schemas/definition/v1/PolicyInput",
+      "path": "v1/definition.v1.schema.json#/$defs/PolicyInput"
+    },
+    {
+      "name": "PolicyDecisionV1",
+      "uri": "https://contracts.modular-mcp.local/schemas/definition/v1/PolicyDecision",
+      "path": "v1/definition.v1.schema.json#/$defs/PolicyDecision"
+    },
+    {
+      "name": "DomainEventV1",
+      "uri": "https://contracts.modular-mcp.local/schemas/definition/v1/DomainEvent",
+      "path": "v1/definition.v1.schema.json#/$defs/DomainEvent"
+    }
+  ],
+  "eventVersioning": {
+    "pattern": "^[a-z]+(?:\\.[a-z]+)*\\.v[0-9]+$",
+    "examples": ["definition.published.v1", "policy.decision.recorded.v1"]
+  }
+}

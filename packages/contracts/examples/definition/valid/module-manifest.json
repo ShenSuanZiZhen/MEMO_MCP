@@ -1,0 +1,28 @@
+{
+  "id": "capability.search-documents",
+  "version": "1.2.3",
+  "type": "capability",
+  "apiVersion": "studio.mcp/v1",
+  "implementation": "builtin:search-documents@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "requires": ["source.normalized-documents@1.0.0"],
+  "conflicts": ["source.unversioned-live-read"],
+  "provides": ["tool.search_documents"],
+  "configSchemaRef": "schemas/search-documents.config.json",
+  "inputSchemaRef": "schemas/search-documents.input.json",
+  "outputSchemaRef": "schemas/search-documents.output.json",
+  "permissions": ["data:search"],
+  "risk": "medium",
+  "limits": {
+    "requestsPerMinute": 60,
+    "maxConcurrency": 5,
+    "timeoutMs": 15000,
+    "maxResults": 10,
+    "maxSections": 5,
+    "maxResponseBytes": 65536
+  },
+  "artifactDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "signature": {
+    "keyId": "platform-root-1",
+    "value": "sig_synthetic_example_value_0000000000000000"
+  }
+}

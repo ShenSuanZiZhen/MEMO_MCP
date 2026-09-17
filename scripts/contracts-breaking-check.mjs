@@ -2,33 +2,135 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   breakingBaselinePath,
+  controlPlaneBreakingBaselinePath,
+  definitionBreakingBaselinePath,
   publicSurfaceFor,
+  publicSurfaceForDefinitionRegistry,
   readCommonOpenApi,
+  readControlPlaneOpenApi,
+  readDefinitionRegistrySchema,
+  readReleaseOpsOpenApi,
+  releaseOpsBreakingBaselinePath,
   root,
   stableJson,
 } from "./contracts-lib.mjs";
 
 const write = process.argv.includes("--write");
-const current = publicSurfaceFor(await readCommonOpenApi());
-const baselinePath = join(root, breakingBaselinePath);
-const currentJson = stableJson(current);
+const failures = [];
+const documents = [
+  {
+    baselinePath: breakingBaselinePath,
+    current: publicSurfaceWithOperations(await readCommonOpenApi()),
+  },
+  {
+    baselinePath: controlPlaneBreakingBaselinePath,
+    current: publicSurfaceWithOperations(await readControlPlaneOpenApi()),
+  },
+  {
+    baselinePath: releaseOpsBreakingBaselinePath,
+    current: publicSurfaceWithOperations(await readReleaseOpsOpenApi()),
+  },
+  {
+    baselinePath: definitionBreakingBaselinePath,
+    current: publicSurfaceForDefinitionRegistry(
+      await readDefinitionRegistrySchema(),
+    ),
+  },
+];
 
 if (write) {
-  await writeFile(baselinePath, currentJson);
-  console.log(`wrote ${breakingBaselinePath}`);
+  for (const document of documents) {
+    await writeFile(
+      join(root, document.baselinePath),
+      stableJson(document.current),
+    );
+    console.log(`wrote ${document.baselinePath}`);
+  }
   process.exit(0);
 }
 
-const baseline = JSON.parse(await readFile(baselinePath, "utf8"));
-const failures = [];
-
-for (const [schemaName, baselineSchema] of Object.entries(baseline)) {
-  const currentSchema = current[schemaName];
-  if (!currentSchema) {
-    failures.push(`${schemaName}: schema was removed`);
-    continue;
+for (const document of documents) {
+  const baseline = JSON.parse(
+    await readFile(join(root, document.baselinePath), "utf8"),
+  );
+  if (document.current.__operations && !baseline.__operations) {
+    failures.push(
+      `${document.baselinePath}: operation surface is not tracked in baseline`,
+    );
   }
-  compareSignatures(schemaName, baselineSchema, currentSchema);
+  if (baseline.__operations && document.current.__operations) {
+    compareOperations(
+      `${document.baselinePath}:__operations`,
+      baseline.__operations,
+      document.current.__operations,
+    );
+  }
+  for (const [schemaName, baselineSchema] of Object.entries(baseline)) {
+    if (schemaName === "__operations") {
+      continue;
+    }
+    const currentSchema = document.current[schemaName];
+    if (!currentSchema) {
+      failures.push(
+        `${document.baselinePath}:${schemaName}: schema was removed`,
+      );
+      continue;
+    }
+    compareSignatures(
+      `${document.baselinePath}:${schemaName}`,
+      baselineSchema,
+      currentSchema,
+    );
+  }
+}
+
+function publicSurfaceWithOperations(openApi) {
+  const surface = publicSurfaceFor(openApi);
+  const operations = operationSurfaceFor(openApi);
+  if (Object.keys(operations).length > 0) {
+    surface.__operations = operations;
+  }
+  return surface;
+}
+
+function operationSurfaceFor(openApi) {
+  const operations = {};
+  for (const [path, pathItem] of Object.entries(openApi.paths ?? {})) {
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (!["get", "post", "patch", "put", "delete"].includes(method)) {
+        continue;
+      }
+      operations[operation.operationId] = {
+        method: method.toUpperCase(),
+        path,
+      };
+    }
+  }
+  return operations;
+}
+
+function compareOperations(path, baselineOperations, currentOperations) {
+  for (const [operationId, baselineOperation] of Object.entries(
+    baselineOperations,
+  )) {
+    const currentOperation = currentOperations[operationId];
+    if (!currentOperation) {
+      failures.push(`${path}.${operationId}: operation was removed`);
+      continue;
+    }
+    if (baselineOperation.method !== currentOperation.method) {
+      failures.push(`${path}.${operationId}: method changed`);
+    }
+    if (baselineOperation.path !== currentOperation.path) {
+      failures.push(`${path}.${operationId}: path changed`);
+    }
+  }
+
+  for (const operationId of Object.keys(currentOperations)) {
+    if (!baselineOperations[operationId]) {
+      failures.push(`${path}.${operationId}: operation was added`);
+    }
+  }
 }
 
 function compareSignatures(path, baselineNode, currentNode) {
@@ -42,6 +144,8 @@ function compareSignatures(path, baselineNode, currentNode) {
     "pattern",
     "minimum",
     "maximum",
+    "minItems",
+    "maxItems",
     "minLength",
     "maxLength",
   ]) {
@@ -89,4 +193,6 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`breaking-change check passed against ${breakingBaselinePath}`);
+console.log(
+  `breaking-change check passed against ${documents.map((document) => document.baselinePath).join(", ")}`,
+);

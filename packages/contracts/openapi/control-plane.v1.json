@@ -1,0 +1,1612 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Modular MCP Core Control Plane API",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "/api/v1" }],
+  "paths": {
+    "/api/v1/workspaces": {
+      "get": {
+        "operationId": "listWorkspaces",
+        "tags": ["Workspaces"],
+        "parameters": [
+          { "$ref": "#/components/parameters/Cursor" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/WorkspaceList" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": { "query": { "limit": 20 } },
+          "success": {
+            "status": 200,
+            "body": { "items": [], "pageInfo": { "hasMore": false } }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      },
+      "post": {
+        "operationId": "createWorkspace",
+        "tags": ["Workspaces"],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "$ref": "#/components/requestBodies/CreateWorkspace" },
+        "responses": {
+          "201": { "$ref": "#/components/responses/Workspace" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" },
+            "body": {
+              "kind": "team",
+              "displayName": "Knowledge Ops",
+              "region": "us",
+              "purpose": "internal_knowledge"
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "kind": "team",
+              "displayName": "Knowledge Ops",
+              "region": "us",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}": {
+      "get": {
+        "operationId": "getWorkspace",
+        "tags": ["Workspaces"],
+        "parameters": [{ "$ref": "#/components/parameters/WorkspaceId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Workspace" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": { "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "kind": "team",
+              "displayName": "Knowledge Ops",
+              "region": "us",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/Cursor" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ProjectList" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": { "query": { "limit": 20 } },
+          "success": {
+            "status": 200,
+            "body": { "items": [], "pageInfo": { "hasMore": false } }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      },
+      "post": {
+        "operationId": "createProject",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/CreateProject" },
+        "responses": {
+          "201": { "$ref": "#/components/responses/Project" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" },
+            "body": {
+              "name": "Support Knowledge",
+              "description": "Internal support material",
+              "defaultRegion": "us",
+              "defaultEnvironment": "development"
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "name": "Support Knowledge",
+              "description": "Internal support material",
+              "defaultRegion": "us",
+              "defaultEnvironment": "development",
+              "status": "active",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}": {
+      "get": {
+        "operationId": "getProject",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Project" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": { "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "name": "Support Knowledge",
+              "description": "Internal support material",
+              "defaultRegion": "us",
+              "defaultEnvironment": "development",
+              "status": "active",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      },
+      "patch": {
+        "operationId": "updateProject",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/UpdateProject" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Project" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": { "body": { "name": "Support Knowledge Base" } },
+          "success": {
+            "status": 200,
+            "body": {
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "name": "Support Knowledge Base",
+              "description": "Internal support material",
+              "defaultRegion": "us",
+              "defaultEnvironment": "development",
+              "status": "active",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:09:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}:archive": {
+      "post": {
+        "operationId": "archiveProject",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Project" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "name": "Support Knowledge",
+              "defaultRegion": "us",
+              "defaultEnvironment": "development",
+              "status": "archived",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:10:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}:restore": {
+      "post": {
+        "operationId": "restoreProject",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Project" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "name": "Support Knowledge",
+              "defaultRegion": "us",
+              "defaultEnvironment": "development",
+              "status": "active",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:11:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/drafts": {
+      "get": {
+        "operationId": "listDrafts",
+        "tags": ["Drafts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/Cursor" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/DraftList" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": { "environment": "development" },
+            "query": { "limit": 20 }
+          },
+          "success": {
+            "status": 200,
+            "body": { "items": [], "pageInfo": { "hasMore": false } }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      },
+      "post": {
+        "operationId": "createDraft",
+        "tags": ["Drafts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/CreateDraft" },
+        "responses": {
+          "201": { "$ref": "#/components/responses/Draft" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" },
+            "body": {
+              "creationMode": "template",
+              "templateId": "tpl_knowledge_search_v1",
+              "name": "Support Search",
+              "goal": {
+                "description": "Search support articles",
+                "audience": "internal_members",
+                "prohibitedUses": ["bulk_export"],
+                "capabilities": [
+                  "browse_catalog",
+                  "search_content",
+                  "read_sections",
+                  "verify_citation"
+                ]
+              }
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "draftId": "drf_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "development",
+              "name": "Support Search",
+              "status": "editing",
+              "revision": 1,
+              "currentStep": "goal",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/drafts/{draftId}": {
+      "get": {
+        "operationId": "getDraft",
+        "tags": ["Drafts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/DraftId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Draft" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "environment": "development",
+              "draftId": "drf_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "draftId": "drf_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "development",
+              "name": "Support Search",
+              "status": "editing",
+              "revision": 1,
+              "currentStep": "goal",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      },
+      "patch": {
+        "operationId": "updateDraft",
+        "tags": ["Drafts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/DraftId" },
+          { "$ref": "#/components/parameters/IfMatch" }
+        ],
+        "requestBody": { "$ref": "#/components/requestBodies/UpdateDraft" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Draft" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" },
+          "412": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "If-Match": "rev-1" },
+            "body": {
+              "revision": 1,
+              "currentStep": "data",
+              "patch": { "goal": { "description": "Search support articles" } }
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "draftId": "drf_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "development",
+              "name": "Support Search",
+              "status": "editing",
+              "revision": 2,
+              "currentStep": "data",
+              "updatedAt": "2026-09-16T07:09:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources": {
+      "get": {
+        "operationId": "listDataSources",
+        "tags": ["Data"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/Cursor" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/DataSourceList" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": { "environment": "development" },
+            "query": { "limit": 20 }
+          },
+          "success": {
+            "status": 200,
+            "body": { "items": [], "pageInfo": { "hasMore": false } }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      },
+      "post": {
+        "operationId": "createDataSource",
+        "tags": ["Data"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateDataSource"
+        },
+        "responses": {
+          "201": { "$ref": "#/components/responses/DataSource" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" },
+            "body": {
+              "kind": "file_upload",
+              "displayName": "Support Articles",
+              "sensitivity": "internal",
+              "rights": "authorized_internal_use",
+              "versionStrategy": "fixed"
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "dataSourceId": "ds_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "development",
+              "kind": "file_upload",
+              "displayName": "Support Articles",
+              "sensitivity": "internal",
+              "versionStrategy": "fixed",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources/{dataSourceId}": {
+      "get": {
+        "operationId": "getDataSource",
+        "tags": ["Data"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/DataSourceId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/DataSource" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "environment": "development",
+              "dataSourceId": "ds_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "dataSourceId": "ds_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "development",
+              "kind": "file_upload",
+              "displayName": "Support Articles",
+              "sensitivity": "internal",
+              "versionStrategy": "fixed",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:08:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources/{dataSourceId}/versions": {
+      "post": {
+        "operationId": "startDataVersionProcessing",
+        "tags": ["Data"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/DataSourceId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StartDataVersionProcessing"
+        },
+        "responses": {
+          "202": { "$ref": "#/components/responses/AcceptedJob" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": { "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" },
+            "body": { "expectedFileCount": 3 }
+          },
+          "success": {
+            "status": 202,
+            "body": {
+              "jobId": "job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "statusUrl": "/api/v1/jobs/job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/ConflictFailure" }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-versions/{dataVersionId}": {
+      "get": {
+        "operationId": "getDataVersion",
+        "tags": ["Data"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkspaceId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Environment" },
+          { "$ref": "#/components/parameters/DataVersionId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/DataVersion" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "environment": "development",
+              "dataVersionId": "dv_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "dataVersionId": "dv_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "dataSourceId": "ds_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "development",
+              "status": "completed",
+              "processingStage": "completed",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "completedAt": "2026-09-16T07:12:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    },
+    "/api/v1/module-catalog/modules": {
+      "get": {
+        "operationId": "listModuleCatalog",
+        "tags": ["Module Catalog"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentQuery" },
+          { "$ref": "#/components/parameters/Cursor" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ModuleList" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": { "query": { "environment": "development", "limit": 20 } },
+          "success": {
+            "status": 200,
+            "body": { "items": [], "pageInfo": { "hasMore": false } }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    },
+    "/api/v1/module-catalog/modules/{moduleId}/versions/{moduleVersion}": {
+      "get": {
+        "operationId": "getModuleCatalogVersion",
+        "tags": ["Module Catalog"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ModuleId" },
+          { "$ref": "#/components/parameters/ModuleVersion" },
+          { "$ref": "#/components/parameters/EnvironmentQuery" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ModuleVersion" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": { "query": { "environment": "development" } },
+          "success": {
+            "status": 200,
+            "body": {
+              "moduleId": "mod_search",
+              "moduleVersion": "1.0.0",
+              "kind": "capability",
+              "displayName": "Search documents",
+              "riskLevel": "low",
+              "reviewStatus": "approved",
+              "capabilities": ["search_content"],
+              "dependencies": []
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    },
+    "/api/v1/jobs/{jobId}": {
+      "get": {
+        "operationId": "getJob",
+        "tags": ["Jobs"],
+        "parameters": [{ "$ref": "#/components/parameters/JobId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Job" },
+          "401": { "$ref": "#/components/responses/AuthnError" },
+          "404": { "$ref": "#/components/responses/NotFoundOrDeniedError" }
+        },
+        "x-contract-examples": {
+          "request": { "path": { "jobId": "job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8" } },
+          "success": {
+            "status": 200,
+            "body": {
+              "jobId": "job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "running",
+              "createdAt": "2026-09-16T07:08:36Z",
+              "updatedAt": "2026-09-16T07:09:36Z"
+            }
+          },
+          "failure": { "$ref": "#/components/examples/NotFoundOrDeniedFailure" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": { "type": "string", "minLength": 12, "maxLength": 160 }
+      },
+      "IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^rev-[0-9]+$" }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/Cursor" }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "WorkspaceId": {
+        "name": "workspaceId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/OpaqueId" }
+      },
+      "ProjectId": {
+        "name": "projectId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/OpaqueId" }
+      },
+      "DraftId": {
+        "name": "draftId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/OpaqueId" }
+      },
+      "DataSourceId": {
+        "name": "dataSourceId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/OpaqueId" }
+      },
+      "DataVersionId": {
+        "name": "dataVersionId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/OpaqueId" }
+      },
+      "JobId": {
+        "name": "jobId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "./common.v1.json#/components/schemas/OpaqueId" }
+      },
+      "ModuleId": {
+        "name": "moduleId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^mod_[a-z0-9_]+$" }
+      },
+      "ModuleVersion": {
+        "name": "moduleVersion",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+      },
+      "Environment": {
+        "name": "environment",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/Environment" }
+      },
+      "EnvironmentQuery": {
+        "name": "environment",
+        "in": "query",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/Environment" }
+      }
+    },
+    "requestBodies": {
+      "CreateWorkspace": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/CreateWorkspaceRequest" }
+          }
+        }
+      },
+      "CreateProject": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/CreateProjectRequest" }
+          }
+        }
+      },
+      "UpdateProject": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/UpdateProjectRequest" }
+          }
+        }
+      },
+      "CreateDraft": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/CreateDraftRequest" }
+          }
+        }
+      },
+      "UpdateDraft": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/UpdateDraftRequest" }
+          }
+        }
+      },
+      "CreateDataSource": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/CreateDataSourceRequest" }
+          }
+        }
+      },
+      "StartDataVersionProcessing": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StartDataVersionProcessingRequest"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Workspace": {
+        "description": "Workspace response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/WorkspaceResponse" }
+          }
+        }
+      },
+      "WorkspaceList": {
+        "description": "Workspace list response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/WorkspaceListResponse" }
+          }
+        }
+      },
+      "Project": {
+        "description": "Project response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ProjectResponse" }
+          }
+        }
+      },
+      "ProjectList": {
+        "description": "Project list response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ProjectListResponse" }
+          }
+        }
+      },
+      "Draft": {
+        "description": "Draft response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/DraftResponse" }
+          }
+        }
+      },
+      "DraftList": {
+        "description": "Draft list response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/DraftListResponse" }
+          }
+        }
+      },
+      "DataSource": {
+        "description": "Data source response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/DataSourceResponse" }
+          }
+        }
+      },
+      "DataSourceList": {
+        "description": "Data source list response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/DataSourceListResponse" }
+          }
+        }
+      },
+      "DataVersion": {
+        "description": "Data version response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/DataVersionResponse" }
+          }
+        }
+      },
+      "ModuleList": {
+        "description": "Module list response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ModuleListResponse" }
+          }
+        }
+      },
+      "ModuleVersion": {
+        "description": "Module version response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ModuleVersionResponse" }
+          }
+        }
+      },
+      "Job": {
+        "description": "Job response",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "./common.v1.json#/components/schemas/Job" }
+          }
+        }
+      },
+      "AcceptedJob": {
+        "description": "Accepted async job",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/AcceptedJobResponse"
+            }
+          }
+        }
+      },
+      "AuthnError": {
+        "description": "Authentication failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "NotFoundOrDeniedError": {
+        "description": "Resource not found or caller is not authorized; response does not distinguish existence.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "ConflictError": {
+        "description": "Revision, idempotency, state, or dependency conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      }
+    },
+    "examples": {
+      "NotFoundOrDeniedFailure": {
+        "value": {
+          "status": 404,
+          "body": {
+            "error": {
+              "code": "AUTHZ_NOT_FOUND_OR_DENIED",
+              "category": "AUTHZ",
+              "message": "The resource is unavailable.",
+              "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "retryable": false,
+              "nextAction": "Check your access or choose another resource."
+            }
+          }
+        }
+      },
+      "ConflictFailure": {
+        "value": {
+          "status": 409,
+          "body": {
+            "error": {
+              "code": "DEFINITION_INVALID_REQUEST",
+              "category": "DEFINITION",
+              "message": "The request conflicts with the current state.",
+              "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "retryable": false,
+              "nextAction": "Refresh the resource and retry with the current revision."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Environment": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/Environment",
+        "type": "string",
+        "enum": ["development", "test", "production"]
+      },
+      "WorkspaceKind": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/WorkspaceKind",
+        "type": "string",
+        "enum": ["personal", "team"]
+      },
+      "ProjectStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ProjectStatus",
+        "type": "string",
+        "enum": ["active", "archived"]
+      },
+      "DraftStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DraftStatus",
+        "type": "string",
+        "enum": [
+          "editing",
+          "validating",
+          "ready",
+          "building",
+          "built",
+          "submitted"
+        ]
+      },
+      "WizardStep": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/WizardStep",
+        "type": "string",
+        "enum": [
+          "goal",
+          "data",
+          "modules",
+          "configuration",
+          "preview",
+          "test",
+          "publish"
+        ]
+      },
+      "DataSourceKind": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DataSourceKind",
+        "type": "string",
+        "enum": [
+          "file_upload",
+          "http_api",
+          "object_storage",
+          "readonly_database"
+        ]
+      },
+      "Sensitivity": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/Sensitivity",
+        "type": "string",
+        "enum": ["public", "internal", "confidential"]
+      },
+      "VersionStrategy": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/VersionStrategy",
+        "type": "string",
+        "enum": ["fixed", "manual_confirm_before_publish", "controlled_follow"]
+      },
+      "DataVersionStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DataVersionStatus",
+        "type": "string",
+        "enum": [
+          "created",
+          "uploading",
+          "uploaded",
+          "processing",
+          "completed",
+          "partial",
+          "failed",
+          "cancelled",
+          "expired"
+        ]
+      },
+      "ProcessingStage": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ProcessingStage",
+        "type": "string",
+        "enum": [
+          "upload",
+          "security_scan",
+          "format_detect",
+          "parse",
+          "normalize",
+          "chunk",
+          "index",
+          "completed"
+        ]
+      },
+      "ModuleKind": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ModuleKind",
+        "type": "string",
+        "enum": ["source", "capability", "output", "prompt"]
+      },
+      "ReviewStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ReviewStatus",
+        "type": "string",
+        "enum": ["testing", "submitted", "approved", "deprecated", "blocked"]
+      },
+      "WorkspaceResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/WorkspaceResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workspaceId",
+          "kind",
+          "displayName",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "workspaceId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "kind": { "$ref": "#/components/schemas/WorkspaceKind" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "region": { "type": "string", "minLength": 2, "maxLength": 32 },
+          "createdAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "updatedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "WorkspaceListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/WorkspaceListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkspaceResponse" }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "CreateWorkspaceRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/CreateWorkspaceRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "displayName"],
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/WorkspaceKind" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "region": { "type": "string", "minLength": 2, "maxLength": 32 },
+          "purpose": { "type": "string", "maxLength": 120 }
+        }
+      },
+      "ProjectResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ProjectResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "projectId",
+          "workspaceId",
+          "name",
+          "defaultRegion",
+          "defaultEnvironment",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "projectId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "workspaceId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "description": { "type": "string", "maxLength": 500 },
+          "defaultRegion": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 32
+          },
+          "defaultEnvironment": { "$ref": "#/components/schemas/Environment" },
+          "status": { "$ref": "#/components/schemas/ProjectStatus" },
+          "createdAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "updatedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "ProjectListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ProjectListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProjectResponse" }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/CreateProjectRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "defaultRegion", "defaultEnvironment"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "description": { "type": "string", "maxLength": 500 },
+          "defaultRegion": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 32
+          },
+          "defaultEnvironment": { "$ref": "#/components/schemas/Environment" }
+        }
+      },
+      "UpdateProjectRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/UpdateProjectRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "description": { "type": "string", "maxLength": 500 }
+        }
+      },
+      "GoalSelection": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/GoalSelection",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "description",
+          "audience",
+          "prohibitedUses",
+          "capabilities"
+        ],
+        "properties": {
+          "description": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "audience": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "prohibitedUses": { "type": "array", "items": { "type": "string" } },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "browse_catalog",
+                "view_metadata",
+                "search_content",
+                "read_sections",
+                "verify_citation"
+              ]
+            }
+          }
+        }
+      },
+      "DraftResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DraftResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "draftId",
+          "projectId",
+          "environment",
+          "name",
+          "status",
+          "revision",
+          "currentStep",
+          "updatedAt"
+        ],
+        "properties": {
+          "draftId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "projectId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "environment": { "$ref": "#/components/schemas/Environment" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "status": { "$ref": "#/components/schemas/DraftStatus" },
+          "revision": { "type": "integer", "minimum": 1 },
+          "currentStep": { "$ref": "#/components/schemas/WizardStep" },
+          "goal": { "$ref": "#/components/schemas/GoalSelection" },
+          "updatedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "DraftListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DraftListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DraftResponse" }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "CreateDraftRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/CreateDraftRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["creationMode", "name"],
+        "properties": {
+          "creationMode": {
+            "type": "string",
+            "enum": ["blank", "template", "copy_version"]
+          },
+          "templateId": {
+            "type": "string",
+            "pattern": "^tpl_[a-z0-9_]+_v[0-9]+$"
+          },
+          "sourceVersionId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "name": { "type": "string", "minLength": 2, "maxLength": 60 },
+          "goal": { "$ref": "#/components/schemas/GoalSelection" }
+        }
+      },
+      "UpdateDraftRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/UpdateDraftRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "patch"],
+        "properties": {
+          "revision": { "type": "integer", "minimum": 1 },
+          "currentStep": { "$ref": "#/components/schemas/WizardStep" },
+          "patch": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "DataSourceResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DataSourceResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dataSourceId",
+          "projectId",
+          "environment",
+          "kind",
+          "displayName",
+          "sensitivity",
+          "versionStrategy",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "dataSourceId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "projectId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "environment": { "$ref": "#/components/schemas/Environment" },
+          "kind": { "$ref": "#/components/schemas/DataSourceKind" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "sensitivity": { "$ref": "#/components/schemas/Sensitivity" },
+          "versionStrategy": { "$ref": "#/components/schemas/VersionStrategy" },
+          "credentialPreview": {
+            "$ref": "#/components/schemas/CredentialPreview"
+          },
+          "createdAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "updatedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "CredentialPreview": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/CredentialPreview",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["authType", "lastFour", "updatedAt"],
+        "properties": {
+          "authType": {
+            "type": "string",
+            "enum": [
+              "none",
+              "api_key",
+              "bearer",
+              "basic",
+              "oauth_client",
+              "readonly_database"
+            ]
+          },
+          "lastFour": { "type": "string", "minLength": 4, "maxLength": 4 },
+          "updatedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "DataSourceListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DataSourceListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DataSourceResponse" }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "CreateDataSourceRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/CreateDataSourceRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "displayName",
+          "sensitivity",
+          "rights",
+          "versionStrategy"
+        ],
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/DataSourceKind" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "sensitivity": { "$ref": "#/components/schemas/Sensitivity" },
+          "rights": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "versionStrategy": { "$ref": "#/components/schemas/VersionStrategy" }
+        }
+      },
+      "StartDataVersionProcessingRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/StartDataVersionProcessingRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedFileCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          }
+        }
+      },
+      "DataVersionResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/DataVersionResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dataVersionId",
+          "dataSourceId",
+          "environment",
+          "status",
+          "processingStage",
+          "createdAt"
+        ],
+        "properties": {
+          "dataVersionId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "dataSourceId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "environment": { "$ref": "#/components/schemas/Environment" },
+          "status": { "$ref": "#/components/schemas/DataVersionStatus" },
+          "processingStage": { "$ref": "#/components/schemas/ProcessingStage" },
+          "createdAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "completedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "error": {
+            "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+          }
+        }
+      },
+      "ModuleSummary": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ModuleSummary",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "moduleId",
+          "moduleVersion",
+          "kind",
+          "displayName",
+          "riskLevel",
+          "reviewStatus",
+          "capabilities"
+        ],
+        "properties": {
+          "moduleId": { "type": "string", "pattern": "^mod_[a-z0-9_]+$" },
+          "moduleVersion": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "kind": { "$ref": "#/components/schemas/ModuleKind" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "riskLevel": { "type": "string", "enum": ["low", "medium", "high"] },
+          "reviewStatus": { "$ref": "#/components/schemas/ReviewStatus" },
+          "capabilities": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ModuleListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ModuleListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ModuleSummary" }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "ModuleVersionResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/control-plane/v1/ModuleVersionResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "moduleId",
+          "moduleVersion",
+          "kind",
+          "displayName",
+          "riskLevel",
+          "reviewStatus",
+          "capabilities",
+          "dependencies"
+        ],
+        "properties": {
+          "moduleId": { "type": "string", "pattern": "^mod_[a-z0-9_]+$" },
+          "moduleVersion": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "kind": { "$ref": "#/components/schemas/ModuleKind" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "riskLevel": { "type": "string", "enum": ["low", "medium", "high"] },
+          "reviewStatus": { "$ref": "#/components/schemas/ReviewStatus" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "dependencies": { "type": "array", "items": { "type": "string" } },
+          "conflicts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

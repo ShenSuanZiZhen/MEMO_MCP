@@ -1,0 +1,598 @@
+{
+  "DomainEvent": {
+    "additionalProperties": false,
+    "properties": {
+      "aggregateId": {
+        "ref": "#/$defs/OpaqueId"
+      },
+      "aggregateVersion": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "data": {
+        "additionalProperties": false,
+        "properties": {
+          "refs": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "digest": {
+                  "ref": "#/$defs/Sha256Digest"
+                },
+                "id": {
+                  "ref": "#/$defs/OpaqueId"
+                },
+                "kind": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": ["digest", "id", "kind"],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["refs"],
+        "type": "object"
+      },
+      "eventId": {
+        "ref": "#/$defs/OpaqueId"
+      },
+      "eventType": {
+        "pattern": "^[a-z]+(?:\\.[a-z]+)*\\.v[0-9]+$",
+        "type": "string"
+      },
+      "idempotencyKey": {
+        "maxLength": 160,
+        "minLength": 12,
+        "type": "string"
+      },
+      "occurredAt": {
+        "ref": "#/$defs/UtcDateTime"
+      },
+      "projectId": {
+        "ref": "#/$defs/OpaqueId"
+      },
+      "traceId": {
+        "maxLength": 128,
+        "minLength": 8,
+        "type": "string"
+      },
+      "workspaceId": {
+        "ref": "#/$defs/OpaqueId"
+      }
+    },
+    "required": [
+      "aggregateId",
+      "aggregateVersion",
+      "data",
+      "eventId",
+      "eventType",
+      "idempotencyKey",
+      "occurredAt",
+      "projectId",
+      "traceId",
+      "workspaceId"
+    ],
+    "type": "object"
+  },
+  "EffectiveLimits": {
+    "additionalProperties": false,
+    "properties": {
+      "maxConcurrency": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "maxResponseBytes": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "maxResults": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "maxSections": {
+        "maximum": 5,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "requestsPerMinute": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "timeoutMs": {
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "maxConcurrency",
+      "maxResponseBytes",
+      "maxResults",
+      "maxSections",
+      "requestsPerMinute",
+      "timeoutMs"
+    ],
+    "type": "object"
+  },
+  "Environment": {
+    "enum": ["development", "production", "test"],
+    "type": "string"
+  },
+  "ExactVersion": {
+    "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$",
+    "type": "string"
+  },
+  "ModuleManifest": {
+    "additionalProperties": false,
+    "properties": {
+      "apiVersion": {
+        "enum": ["studio.mcp/v1"],
+        "type": "string"
+      },
+      "artifactDigest": {
+        "ref": "#/$defs/Sha256Digest"
+      },
+      "configSchemaRef": {
+        "type": "string"
+      },
+      "conflicts": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "id": {
+        "pattern": "^[a-z]+\\.[a-z0-9-]+$",
+        "type": "string"
+      },
+      "implementation": {
+        "pattern": "^builtin:[a-z0-9-]+@sha256:[a-f0-9]{64}$",
+        "type": "string"
+      },
+      "inputSchemaRef": {
+        "type": "string"
+      },
+      "limits": {
+        "ref": "#/$defs/EffectiveLimits"
+      },
+      "outputSchemaRef": {
+        "type": "string"
+      },
+      "permissions": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "provides": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "requires": {
+        "items": {
+          "pattern": "^[a-z]+\\.[a-z0-9-]+@\\d+\\.\\d+\\.\\d+$",
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "risk": {
+        "ref": "#/$defs/RiskLevel"
+      },
+      "signature": {
+        "additionalProperties": false,
+        "properties": {
+          "keyId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "value": {
+            "minLength": 32,
+            "type": "string"
+          }
+        },
+        "required": ["keyId", "value"],
+        "type": "object"
+      },
+      "type": {
+        "ref": "#/$defs/ModuleType"
+      },
+      "version": {
+        "ref": "#/$defs/ExactVersion"
+      }
+    },
+    "required": [
+      "apiVersion",
+      "artifactDigest",
+      "conflicts",
+      "id",
+      "implementation",
+      "limits",
+      "permissions",
+      "provides",
+      "requires",
+      "risk",
+      "signature",
+      "type",
+      "version"
+    ],
+    "type": "object"
+  },
+  "ModuleType": {
+    "enum": ["capability", "output", "prompt", "source"],
+    "type": "string"
+  },
+  "OpaqueId": {
+    "maxLength": 160,
+    "minLength": 10,
+    "pattern": "^[a-z][a-z0-9]*_[A-Za-z0-9_-]{8,128}$",
+    "type": "string"
+  },
+  "PolicyDecision": {
+    "additionalProperties": false,
+    "properties": {
+      "allow": {
+        "type": "boolean"
+      },
+      "decisionId": {
+        "ref": "#/$defs/OpaqueId"
+      },
+      "effectiveLimits": {
+        "ref": "#/$defs/EffectiveLimits"
+      },
+      "effectiveScopes": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "policyVersion": {
+        "ref": "#/$defs/OpaqueId"
+      },
+      "reason": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "allow",
+      "decisionId",
+      "effectiveLimits",
+      "effectiveScopes",
+      "policyVersion",
+      "reason"
+    ],
+    "type": "object"
+  },
+  "PolicyInput": {
+    "additionalProperties": false,
+    "properties": {
+      "actor": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "ref": "#/$defs/OpaqueId"
+          },
+          "roles": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["actorId", "roles"],
+        "type": "object"
+      },
+      "capability": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "credential": {
+        "additionalProperties": false,
+        "properties": {
+          "credentialId": {
+            "ref": "#/$defs/OpaqueId"
+          },
+          "kind": {
+            "enum": ["api_key", "oauth_client"],
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": ["active", "expired", "revoked", "rotating"],
+            "type": "string"
+          }
+        },
+        "required": ["credentialId", "kind", "scopes", "status"],
+        "type": "object"
+      },
+      "dataScope": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "environment": {
+        "ref": "#/$defs/Environment"
+      },
+      "network": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["source"],
+        "type": "object"
+      },
+      "projectId": {
+        "ref": "#/$defs/OpaqueId"
+      },
+      "serviceState": {
+        "enum": ["degraded", "healthy", "retired", "suspended"],
+        "type": "string"
+      },
+      "serviceVersion": {
+        "ref": "#/$defs/ExactVersion"
+      },
+      "time": {
+        "ref": "#/$defs/UtcDateTime"
+      },
+      "workspaceId": {
+        "ref": "#/$defs/OpaqueId"
+      }
+    },
+    "required": [
+      "actor",
+      "capability",
+      "credential",
+      "dataScope",
+      "environment",
+      "network",
+      "projectId",
+      "serviceState",
+      "serviceVersion",
+      "time",
+      "workspaceId"
+    ],
+    "type": "object"
+  },
+  "RiskLevel": {
+    "enum": ["high", "low", "medium"],
+    "type": "string"
+  },
+  "ServiceDefinition": {
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "prompts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["prompts", "resources", "tools"],
+        "type": "object"
+      },
+      "dataBindings": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "allowedScopes": {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "dataVersionDigest": {
+              "ref": "#/$defs/Sha256Digest"
+            },
+            "dataVersionId": {
+              "ref": "#/$defs/OpaqueId"
+            },
+            "sourceId": {
+              "ref": "#/$defs/OpaqueId"
+            }
+          },
+          "required": [
+            "allowedScopes",
+            "dataVersionDigest",
+            "dataVersionId",
+            "sourceId"
+          ],
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "identity": {
+        "additionalProperties": false,
+        "properties": {
+          "projectId": {
+            "ref": "#/$defs/OpaqueId"
+          },
+          "workspaceId": {
+            "ref": "#/$defs/OpaqueId"
+          }
+        },
+        "required": ["projectId", "workspaceId"],
+        "type": "object"
+      },
+      "limits": {
+        "ref": "#/$defs/EffectiveLimits"
+      },
+      "metadata": {
+        "additionalProperties": false,
+        "properties": {
+          "environment": {
+            "ref": "#/$defs/Environment"
+          },
+          "schemaVersion": {
+            "enum": ["definition.v1"],
+            "type": "string"
+          },
+          "serviceId": {
+            "ref": "#/$defs/OpaqueId"
+          },
+          "version": {
+            "ref": "#/$defs/ExactVersion"
+          }
+        },
+        "required": ["environment", "schemaVersion", "serviceId", "version"],
+        "type": "object"
+      },
+      "modules": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "artifactDigest": {
+              "ref": "#/$defs/Sha256Digest"
+            },
+            "exactVersion": {
+              "ref": "#/$defs/ExactVersion"
+            },
+            "moduleId": {
+              "pattern": "^[a-z]+\\.[a-z0-9-]+$",
+              "type": "string"
+            },
+            "normalizedConfig": {
+              "additionalProperties": true,
+              "type": "object"
+            }
+          },
+          "required": [
+            "artifactDigest",
+            "exactVersion",
+            "moduleId",
+            "normalizedConfig"
+          ],
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "outputPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "allowedFields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "citations": {
+            "type": "boolean"
+          },
+          "redactions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["allowedFields", "citations", "redactions"],
+        "type": "object"
+      },
+      "policy": {
+        "additionalProperties": false,
+        "properties": {
+          "audience": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "grants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "networkConstraints": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "policyDigest": {
+            "ref": "#/$defs/Sha256Digest"
+          },
+          "policyVersionId": {
+            "ref": "#/$defs/OpaqueId"
+          },
+          "timeConstraints": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["audience", "grants", "policyDigest", "policyVersionId"],
+        "type": "object"
+      },
+      "runtime": {
+        "additionalProperties": false,
+        "properties": {
+          "builderVersion": {
+            "ref": "#/$defs/ExactVersion"
+          },
+          "protocolVersion": {
+            "enum": ["mcp.2025-06-18"],
+            "type": "string"
+          }
+        },
+        "required": ["builderVersion", "protocolVersion"],
+        "type": "object"
+      }
+    },
+    "required": [
+      "capabilities",
+      "dataBindings",
+      "identity",
+      "limits",
+      "metadata",
+      "modules",
+      "outputPolicy",
+      "policy",
+      "runtime"
+    ],
+    "type": "object"
+  },
+  "Sha256Digest": {
+    "pattern": "^sha256:[a-f0-9]{64}$",
+    "type": "string"
+  },
+  "UtcDateTime": {
+    "format": "date-time",
+    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+    "type": "string"
+  }
+}

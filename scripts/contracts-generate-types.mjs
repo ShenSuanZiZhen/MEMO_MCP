@@ -1,39 +1,77 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import prettier from "prettier";
 import {
+  generatedControlPlaneTypesPath,
+  generatedReleaseOpsTypesPath,
   generatedTypesPath,
   getSchemas,
   readCommonOpenApi,
+  readControlPlaneOpenApi,
+  readReleaseOpsOpenApi,
   resolveRef,
   root,
 } from "./contracts-lib.mjs";
 
 const write = process.argv.includes("--write");
-const openApi = await readCommonOpenApi();
-const schemas = getSchemas(openApi);
-const output = renderTypes(schemas);
-const outputPath = join(root, generatedTypesPath);
+let currentSchemas = {};
+const documents = [
+  {
+    path: generatedTypesPath,
+    schemas: getSchemas(await readCommonOpenApi()),
+    importsCommon: false,
+  },
+  {
+    path: generatedControlPlaneTypesPath,
+    sourcePath: "packages/contracts/openapi/control-plane.v1.json",
+    schemas: getSchemas(await readControlPlaneOpenApi()),
+    importsCommon: true,
+  },
+  {
+    path: generatedReleaseOpsTypesPath,
+    sourcePath: "packages/contracts/openapi/release-ops.v1.json",
+    schemas: getSchemas(await readReleaseOpsOpenApi()),
+    importsCommon: true,
+  },
+];
 
-if (write) {
-  await writeFile(outputPath, output);
-  console.log(`generated ${generatedTypesPath}`);
-} else {
-  const existing = await readFile(outputPath, "utf8");
-  if (existing !== output) {
-    console.error(
-      `generated types are out of date: run pnpm --filter @modular-mcp/contracts generate:types`,
-    );
-    process.exit(1);
+for (const document of documents) {
+  const output = await prettier.format(
+    renderTypes(document.schemas, document.importsCommon, document.sourcePath),
+    {
+      parser: "typescript",
+    },
+  );
+  const outputPath = join(root, document.path);
+
+  if (write) {
+    await writeFile(outputPath, output);
+    console.log(`generated ${document.path}`);
+  } else {
+    const existing = await readFile(outputPath, "utf8");
+    if (existing !== output) {
+      console.error(
+        `generated types are out of date: run pnpm --filter @modular-mcp/contracts generate:types`,
+      );
+      process.exit(1);
+    }
+    console.log(`generated types check passed: ${document.path}`);
   }
-  console.log(`generated types check passed: ${generatedTypesPath}`);
 }
 
-function renderTypes(allSchemas) {
+function renderTypes(allSchemas, importsCommon, sourcePath) {
+  currentSchemas = allSchemas;
   const lines = [
     "/* eslint-disable */",
-    "// Generated from packages/contracts/openapi/common.v1.json. Do not edit by hand.",
+    `// Generated from ${sourcePath ?? "packages/contracts/openapi/common.v1.json"}. Do not edit by hand.`,
     "",
   ];
+  if (importsCommon) {
+    lines.push(
+      'import type { AcceptedJobResponse, Cursor, ErrorEnvelope, Job, OpaqueId, PageInfo as CommonPageInfo, RequestId, TraceId, UtcDateTime } from "./common.js";',
+    );
+    lines.push("");
+  }
 
   for (const [name, schema] of Object.entries(allSchemas)) {
     lines.push(renderSchema(name, schema));
@@ -66,7 +104,7 @@ function renderSchema(name, schema) {
 
 function typeFor(schema) {
   if (schema.$ref) {
-    return resolveRef(schemas, schema.$ref).name;
+    return resolveRef(currentSchemas, schema.$ref).name;
   }
   if (schema.allOf?.length === 1) {
     return typeFor(schema.allOf[0]);

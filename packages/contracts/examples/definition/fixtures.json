@@ -1,0 +1,71 @@
+{
+  "valid": [
+    {
+      "schema": "ServiceDefinition",
+      "path": "valid/service-definition.json"
+    },
+    {
+      "schema": "ModuleManifest",
+      "path": "valid/module-manifest.json"
+    },
+    {
+      "schema": "PolicyInput",
+      "path": "valid/policy-input.json"
+    },
+    {
+      "schema": "PolicyDecision",
+      "path": "valid/policy-decision.json"
+    },
+    {
+      "schema": "DomainEvent",
+      "path": "valid/domain-event.json"
+    }
+  ],
+  "invalid": [
+    {
+      "schema": "ServiceDefinition",
+      "path": "invalid/service-definition-floating-production-version.json",
+      "reason": "production definitions must use exact module versions"
+    },
+    {
+      "schema": "ServiceDefinition",
+      "path": "invalid/service-definition-missing-digest.json",
+      "reason": "definition references must include digests"
+    },
+    {
+      "schema": "DomainEvent",
+      "path": "invalid/domain-event-body.json",
+      "reason": "events must not contain request or response bodies"
+    },
+    {
+      "schema": "PolicyInput",
+      "path": "invalid/policy-input-credential-secret.json",
+      "reason": "policy credential input must reject Secret-bearing fields"
+    },
+    {
+      "schema": "PolicyInput",
+      "path": "invalid/policy-input-actor-body.json",
+      "reason": "policy actor input must reject request body fields"
+    },
+    {
+      "schema": "PolicyInput",
+      "path": "invalid/policy-input-network-full-url.json",
+      "reason": "policy network input must reject full URLs and query strings"
+    },
+    {
+      "schema": "PolicyDecision",
+      "path": "invalid/policy-decision-extra-field.json",
+      "reason": "policy decisions must not return debug policy body fields"
+    },
+    {
+      "schema": "ModuleManifest",
+      "path": "invalid/module-manifest-custom-execution.json",
+      "reason": "module manifests must not expose custom execution commands"
+    },
+    {
+      "schema": "DomainEvent",
+      "path": "invalid/domain-event-secret.json",
+      "reason": "events must not contain Secret payloads"
+    }
+  ]
+}

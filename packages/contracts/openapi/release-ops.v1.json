@@ -1,0 +1,2821 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Modular MCP Release and Operations API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/previews/owner": {
+      "get": {
+        "operationId": "getOwnerPreview",
+        "tags": ["Preview"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/DefinitionId"
+          },
+          {
+            "$ref": "#/components/parameters/Digest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/OwnerPreview"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "query": {
+              "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "warnings": [],
+              "blockingIssues": []
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/previews/consumer": {
+      "get": {
+        "operationId": "getConsumerPreview",
+        "tags": ["Preview"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/DefinitionId"
+          },
+          {
+            "$ref": "#/components/parameters/Digest"
+          },
+          {
+            "$ref": "#/components/parameters/ConsumerScenario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ConsumerPreview"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "query": {
+              "scenario": "authorized",
+              "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "scenario": "authorized",
+              "visibleCapabilities": ["search_documents"],
+              "nextAction": "Connect with a valid credential."
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/previews/client": {
+      "get": {
+        "operationId": "getClientPreview",
+        "tags": ["Preview"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/DefinitionId"
+          },
+          {
+            "$ref": "#/components/parameters/Digest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ClientPreview"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "query": {
+              "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "serverName": "Support Search",
+              "tools": ["search_documents"],
+              "resources": ["mcp://documents/{documentId}"],
+              "prompts": ["search_and_answer"]
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/preview-confirmations": {
+      "post": {
+        "operationId": "confirmPreview",
+        "tags": ["Preview"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/DefinitionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PreviewConfirmation"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PreviewConfirmation"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "confirmedViews": ["owner", "consumer", "client"]
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "confirmedViews": ["owner", "consumer", "client"],
+              "confirmedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/test-runs": {
+      "post": {
+        "operationId": "startTestRun",
+        "tags": ["Testing"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StartTestRun"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/AcceptedJob"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "mode": "full"
+            }
+          },
+          "success": {
+            "status": 202,
+            "body": {
+              "jobId": "job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "statusUrl": "/api/v1/jobs/job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/test-runs/{testRunId}": {
+      "get": {
+        "operationId": "getTestRun",
+        "tags": ["Testing"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/TestRunId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TestRun"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "testRunId": "trn_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "testRunId": "trn_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "mode": "full",
+              "status": "running",
+              "passed": 12,
+              "failed": 0
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/test-reports/{testReportId}": {
+      "get": {
+        "operationId": "getTestReport",
+        "tags": ["Testing"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/TestReportId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TestReport"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "testReportId": "trp_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "testReportId": "trp_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "result": "passed",
+              "securityLogRef": "sec_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "createdAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates": {
+      "post": {
+        "operationId": "submitCandidate",
+        "tags": ["Review"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SubmitCandidate"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Candidate"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "version": "1.0.0",
+              "releaseNotes": "Initial release",
+              "checklist": [
+                "preview_confirmed",
+                "full_test_passed",
+                "data_rights_confirmed"
+              ]
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "candidateId": "cand_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "version": "1.0.0",
+              "status": "submitted",
+              "submittedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates/{candidateId}": {
+      "get": {
+        "operationId": "getCandidate",
+        "tags": ["Review"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/CandidateId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Candidate"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "candidateId": "cand_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "candidateId": "cand_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "version": "1.0.0",
+              "status": "submitted",
+              "submittedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates/{candidateId}:review": {
+      "post": {
+        "operationId": "reviewCandidate",
+        "tags": ["Review"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/CandidateId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ReviewCandidate"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Candidate"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "decision": "approved",
+              "comments": "Definition and test evidence match."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "candidateId": "cand_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "version": "1.0.0",
+              "status": "approved",
+              "submittedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates/{candidateId}:deploy": {
+      "post": {
+        "operationId": "deployCandidate",
+        "tags": ["Deployment"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/CandidateId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/DeployCandidate"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/AcceptedJob"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "success": {
+            "status": 202,
+            "body": {
+              "jobId": "job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "statusUrl": "/api/v1/jobs/job_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        },
+        "description": "Creates or starts a deployment for an approved candidate. This operation does not open the MCP endpoint or grant published access; publishDeployment is the only release operation that opens published MCP access."
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/deployments/{deploymentId}": {
+      "get": {
+        "operationId": "getDeployment",
+        "tags": ["Deployment"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/DeploymentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Deployment"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "deploymentId": "dep_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "deploymentId": "dep_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "status": "healthy"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/deployments/{deploymentId}:publish": {
+      "post": {
+        "operationId": "publishDeployment",
+        "tags": ["Deployment"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/DeploymentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PublishDeployment"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/ServiceRelease"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "serviceVersion": "1.0.0",
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Publish approved candidate version 1.0.0 to production.",
+              "impact": "Opens the MCP endpoint to authorized clients for service version 1.0.0.",
+              "recoveryPlan": "Pause service calls or roll traffic back if post-publish verification fails."
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "serviceId": "svc_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "serviceVersion": "1.0.0",
+              "environment": "production",
+              "definition": {
+                "definitionId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "mcpUrl": "https://mcp.example.com/v1/services/svc_01HZY8T3M6R7P9K2Q4V5X6Y7Z8/mcp",
+              "status": "published"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        },
+        "description": "Publishes a healthy deployment and opens published MCP endpoint access for clients with valid credentials and policy authorization."
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/credentials": {
+      "get": {
+        "operationId": "listCredentials",
+        "tags": ["Credentials"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CredentialList"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "query": {
+              "limit": 20
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "items": [],
+              "pageInfo": {
+                "hasMore": false
+              }
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCredential",
+        "tags": ["Credentials"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateCredential"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/CreateCredential"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "kind": "api_key",
+              "displayName": "Internal assistant",
+              "scopes": ["search_documents"],
+              "expiresAt": "2026-12-31T00:00:00Z"
+            }
+          },
+          "success": {
+            "status": 201,
+            "body": {
+              "credential": {
+                "credentialId": "cred_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+                "kind": "api_key",
+                "displayName": "Internal assistant",
+                "environment": "production",
+                "prefix": "mcp_live_x8K2",
+                "lastFour": "7Z8A",
+                "status": "active",
+                "createdAt": "2026-09-16T08:08:48Z"
+              },
+              "oneTimeSecret": "mcp_live_x8K2_SYNTHETIC_EXAMPLE_ONLY"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/credentials/{credentialId}:revoke": {
+      "post": {
+        "operationId": "revokeCredential",
+        "tags": ["Credentials"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/CredentialId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/HighImpactAction"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CredentialSummary"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Credential owner left the team.",
+              "impact": "New requests using this credential are rejected immediately.",
+              "recoveryPlan": "Create a replacement credential if access is still needed."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "credentialId": "cred_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "kind": "api_key",
+              "displayName": "Internal assistant",
+              "environment": "production",
+              "prefix": "mcp_live_x8K2",
+              "lastFour": "7Z8A",
+              "status": "revoked",
+              "createdAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/operations/summary": {
+      "get": {
+        "operationId": "getOperationsSummary",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/OperationsSummary"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "serviceId": "svc_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "serviceId": "svc_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "environment": "production",
+              "calls": 1200,
+              "errors": 4,
+              "p95Ms": 420,
+              "serviceVersionStatus": "published",
+              "deploymentStatus": "healthy"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/traces": {
+      "get": {
+        "operationId": "listRequestTraces",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TraceList"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "query": {
+              "limit": 20
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "items": [],
+              "pageInfo": {
+                "hasMore": false
+              }
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/traces/{traceId}": {
+      "get": {
+        "operationId": "getRequestTrace",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/TraceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Trace"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "path": {
+              "traceId": "trace_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "traceId": "trace_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "startedAt": "2026-09-16T08:08:48Z",
+              "stages": [
+                {
+                  "stage": "authz",
+                  "status": "passed",
+                  "durationMs": 12
+                }
+              ]
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:pause": {
+      "post": {
+        "operationId": "pauseServiceCalls",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/HighImpactAction"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HighImpactAction"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Investigating elevated error rate.",
+              "impact": "New MCP calls are rejected while existing credentials remain configured.",
+              "recoveryPlan": "Resume calls after deployment health is confirmed."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "actionId": "act_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "requestedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:resume": {
+      "post": {
+        "operationId": "resumeServiceCalls",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/HighImpactAction"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HighImpactAction"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Deployment health has recovered.",
+              "impact": "MCP calls may be accepted again for authorized clients.",
+              "recoveryPlan": "Pause calls again if health checks degrade."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "actionId": "act_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "requestedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:stop-new-access": {
+      "post": {
+        "operationId": "stopNewAccess",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/HighImpactAction"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HighImpactAction"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Access policy review in progress.",
+              "impact": "Existing access remains governed; new credentials are blocked.",
+              "recoveryPlan": "Resume access issuance after review."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "actionId": "act_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "requestedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:resume-new-access": {
+      "post": {
+        "operationId": "resumeNewAccess",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/HighImpactAction"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HighImpactAction"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Access review is complete.",
+              "impact": "New credentials and authorizations may be issued again; existing clients continue under policy.",
+              "recoveryPlan": "Stop issuing new access again if policy verification fails."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "actionId": "act_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "requestedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/versions/{serviceVersion}:retire": {
+      "post": {
+        "operationId": "retireServiceVersion",
+        "tags": ["Operations"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/ProjectId"
+          },
+          {
+            "$ref": "#/components/parameters/Environment"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceVersion"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/HighImpactAction"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HighImpactAction"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "headers": {
+              "Idempotency-Key": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+            },
+            "body": {
+              "stepUpToken": "step_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "reason": "Version replaced by 1.1.0.",
+              "impact": "Clients pinned to this version must migrate before retirement completes.",
+              "recoveryPlan": "Rollback traffic if migration verification fails."
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "actionId": "act_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "status": "accepted",
+              "requestedAt": "2026-09-16T08:08:48Z"
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/ConflictFailure"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-events": {
+      "get": {
+        "operationId": "listAdminAuditEvents",
+        "tags": ["Admin"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/AdminAuditEventList"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthnError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundOrDeniedError"
+          }
+        },
+        "x-contract-examples": {
+          "request": {
+            "query": {
+              "limit": 20
+            }
+          },
+          "success": {
+            "status": 200,
+            "body": {
+              "items": [],
+              "pageInfo": {
+                "hasMore": false
+              }
+            }
+          },
+          "failure": {
+            "$ref": "#/components/examples/NotFoundOrDeniedFailure"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 160
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/Cursor"
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "WorkspaceId": {
+        "name": "workspaceId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "ProjectId": {
+        "name": "projectId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "Environment": {
+        "name": "environment",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ReleaseEnvironment"
+        }
+      },
+      "DefinitionId": {
+        "name": "definitionId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "Digest": {
+        "name": "digest",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Sha256Digest"
+        }
+      },
+      "ConsumerScenario": {
+        "name": "scenario",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ConsumerScenario"
+        }
+      },
+      "TestRunId": {
+        "name": "testRunId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "TestReportId": {
+        "name": "testReportId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "CandidateId": {
+        "name": "candidateId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "DeploymentId": {
+        "name": "deploymentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "ServiceId": {
+        "name": "serviceId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "CredentialId": {
+        "name": "credentialId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+        }
+      },
+      "TraceId": {
+        "name": "traceId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "./common.v1.json#/components/schemas/TraceId"
+        }
+      },
+      "ServiceVersion": {
+        "name": "serviceVersion",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    },
+    "requestBodies": {
+      "PreviewConfirmation": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PreviewConfirmationRequest"
+            }
+          }
+        }
+      },
+      "StartTestRun": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StartTestRunRequest"
+            }
+          }
+        }
+      },
+      "SubmitCandidate": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SubmitCandidateRequest"
+            }
+          }
+        }
+      },
+      "ReviewCandidate": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReviewCandidateRequest"
+            }
+          }
+        }
+      },
+      "DeployCandidate": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DeployCandidateRequest"
+            }
+          }
+        }
+      },
+      "PublishDeployment": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublishDeploymentRequest"
+            }
+          }
+        }
+      },
+      "CreateCredential": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateCredentialRequest"
+            }
+          }
+        }
+      },
+      "HighImpactAction": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HighImpactActionRequest"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "OwnerPreview": {
+        "description": "Owner preview",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OwnerPreviewResponse"
+            }
+          }
+        }
+      },
+      "ConsumerPreview": {
+        "description": "Consumer preview",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ConsumerPreviewResponse"
+            }
+          }
+        }
+      },
+      "ClientPreview": {
+        "description": "MCP client preview",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ClientPreviewResponse"
+            }
+          }
+        }
+      },
+      "PreviewConfirmation": {
+        "description": "Preview confirmation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PreviewConfirmationResponse"
+            }
+          }
+        }
+      },
+      "TestRun": {
+        "description": "Test run",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TestRunResponse"
+            }
+          }
+        }
+      },
+      "TestReport": {
+        "description": "Test report",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TestReportResponse"
+            }
+          }
+        }
+      },
+      "Candidate": {
+        "description": "Review candidate",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CandidateResponse"
+            }
+          }
+        }
+      },
+      "Deployment": {
+        "description": "Deployment",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DeploymentResponse"
+            }
+          }
+        }
+      },
+      "ServiceRelease": {
+        "description": "Published service release",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ServiceReleaseResponse"
+            }
+          }
+        }
+      },
+      "CredentialList": {
+        "description": "Credential list",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CredentialListResponse"
+            }
+          }
+        }
+      },
+      "CreateCredential": {
+        "description": "Credential creation response with one-time Secret",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateCredentialResponse"
+            }
+          }
+        }
+      },
+      "CredentialSummary": {
+        "description": "Credential summary",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CredentialSummaryResponse"
+            }
+          }
+        }
+      },
+      "OperationsSummary": {
+        "description": "Operations summary",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationsSummaryResponse"
+            }
+          }
+        }
+      },
+      "TraceList": {
+        "description": "Trace list",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TraceListResponse"
+            }
+          }
+        }
+      },
+      "Trace": {
+        "description": "Redacted trace",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RequestTraceResponse"
+            }
+          }
+        }
+      },
+      "HighImpactAction": {
+        "description": "High-impact action acknowledgement",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HighImpactActionResponse"
+            }
+          }
+        }
+      },
+      "AdminAuditEventList": {
+        "description": "Admin audit events",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AdminAuditEventListResponse"
+            }
+          }
+        }
+      },
+      "AcceptedJob": {
+        "description": "Accepted async job",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/AcceptedJobResponse"
+            }
+          }
+        }
+      },
+      "AuthnError": {
+        "description": "Authentication failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "NotFoundOrDeniedError": {
+        "description": "Resource not found or caller is not authorized; response does not distinguish existence.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "ConflictError": {
+        "description": "State, digest, review, deployment, or idempotency conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      }
+    },
+    "examples": {
+      "NotFoundOrDeniedFailure": {
+        "value": {
+          "status": 404,
+          "body": {
+            "error": {
+              "code": "AUTHZ_NOT_FOUND_OR_DENIED",
+              "category": "AUTHZ",
+              "message": "The resource is unavailable.",
+              "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "retryable": false,
+              "nextAction": "Check your access or choose another resource."
+            }
+          }
+        }
+      },
+      "ConflictFailure": {
+        "value": {
+          "status": 409,
+          "body": {
+            "error": {
+              "code": "DEPLOY_DEFINITION_MISMATCH",
+              "category": "DEPLOY",
+              "message": "The approved definition digest does not match the runtime artifact.",
+              "requestId": "req_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+              "retryable": false,
+              "nextAction": "Rebuild from the approved definition and investigate the mismatch."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Sha256Digest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/Sha256Digest",
+        "type": "string",
+        "pattern": "^sha256:[a-f0-9]{64}$"
+      },
+      "ReleaseEnvironment": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ReleaseEnvironment",
+        "type": "string",
+        "enum": ["development", "test", "production"]
+      },
+      "DefinitionRef": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/DefinitionRef",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definitionId", "digest"],
+        "properties": {
+          "definitionId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "digest": {
+            "$ref": "#/components/schemas/Sha256Digest"
+          }
+        }
+      },
+      "ConsumerScenario": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ConsumerScenario",
+        "type": "string",
+        "enum": [
+          "anonymous",
+          "authenticated_denied",
+          "authorized",
+          "tool_denied",
+          "quota_exceeded",
+          "credential_expired",
+          "service_suspended"
+        ]
+      },
+      "PreviewView": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/PreviewView",
+        "type": "string",
+        "enum": ["owner", "consumer", "client"]
+      },
+      "OwnerPreviewResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/OwnerPreviewResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definition", "warnings", "blockingIssues"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blockingIssues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ConsumerPreviewResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ConsumerPreviewResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "definition",
+          "scenario",
+          "visibleCapabilities",
+          "nextAction"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/ConsumerScenario"
+          },
+          "visibleCapabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextAction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        }
+      },
+      "ClientPreviewResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ClientPreviewResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "definition",
+          "serverName",
+          "tools",
+          "resources",
+          "prompts"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "serverName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "prompts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PreviewConfirmationRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/PreviewConfirmationRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definition", "confirmedViews"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "confirmedViews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewView"
+            }
+          }
+        }
+      },
+      "PreviewConfirmationResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/PreviewConfirmationResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definition", "confirmedViews", "confirmedAt"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "confirmedViews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewView"
+            }
+          },
+          "confirmedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "TestMode": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/TestMode",
+        "type": "string",
+        "enum": ["quick", "full", "custom"]
+      },
+      "TestStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/TestStatus",
+        "type": "string",
+        "enum": ["accepted", "running", "passed", "failed", "cancelled"]
+      },
+      "StartTestRunRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/StartTestRunRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definition", "mode"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/TestMode"
+          }
+        }
+      },
+      "TestRunResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/TestRunResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "testRunId",
+          "definition",
+          "mode",
+          "status",
+          "passed",
+          "failed"
+        ],
+        "properties": {
+          "testRunId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/TestMode"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TestStatus"
+          },
+          "passed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "TestReportResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/TestReportResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "testReportId",
+          "definition",
+          "result",
+          "securityLogRef",
+          "createdAt"
+        ],
+        "properties": {
+          "testReportId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "result": {
+            "type": "string",
+            "enum": ["passed", "failed"]
+          },
+          "securityLogRef": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "createdAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "CandidateStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CandidateStatus",
+        "type": "string",
+        "enum": [
+          "submitted",
+          "changes_requested",
+          "materials_required",
+          "rejected",
+          "approved",
+          "withdrawn"
+        ]
+      },
+      "SubmitCandidateRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/SubmitCandidateRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definition", "version", "releaseNotes", "checklist"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "releaseNotes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CandidateResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CandidateResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidateId",
+          "definition",
+          "version",
+          "status",
+          "submittedAt"
+        ],
+        "properties": {
+          "candidateId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          },
+          "submittedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "ReviewCandidateRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ReviewCandidateRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision", "comments"],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "changes_requested",
+              "materials_required",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "comments": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      },
+      "DeployCandidateRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/DeployCandidateRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["definition"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          }
+        }
+      },
+      "DeploymentStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/DeploymentStatus",
+        "type": "string",
+        "enum": [
+          "provisioning",
+          "healthy",
+          "degraded",
+          "draining",
+          "suspended",
+          "stopped",
+          "blocked"
+        ]
+      },
+      "DeploymentResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/DeploymentResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["deploymentId", "definition", "status"],
+        "properties": {
+          "deploymentId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeploymentStatus"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "build",
+              "bind_data",
+              "start_instance",
+              "load_version",
+              "health_check",
+              "verify_capabilities",
+              "open_endpoint",
+              "completed"
+            ]
+          }
+        }
+      },
+      "PublishDeploymentRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/PublishDeploymentRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "definition",
+          "serviceVersion",
+          "stepUpToken",
+          "reason",
+          "impact",
+          "recoveryPlan"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "serviceVersion": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "stepUpToken": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 160
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "impact": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "recoveryPlan": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "description": "High-impact request that publishes a deployment. Publishing opens the MCP endpoint; deployCandidate only starts deployment preparation."
+      },
+      "ServiceReleaseResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ServiceReleaseResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "serviceId",
+          "serviceVersion",
+          "status",
+          "environment",
+          "definition",
+          "mcpUrl"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "serviceVersion": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ServiceVersionStatus"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/ReleaseEnvironment"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionRef"
+          },
+          "mcpUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "CredentialKind": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CredentialKind",
+        "type": "string",
+        "enum": ["api_key", "oauth_client"]
+      },
+      "CredentialStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CredentialStatus",
+        "type": "string",
+        "enum": ["active", "rotating", "revoked", "expired"]
+      },
+      "CreateCredentialRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CreateCredentialRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "displayName", "scopes"],
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/CredentialKind"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "CredentialSummaryResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CredentialSummaryResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "credentialId",
+          "kind",
+          "displayName",
+          "environment",
+          "prefix",
+          "lastFour",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "credentialId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CredentialKind"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "environment": {
+            "$ref": "#/components/schemas/ReleaseEnvironment"
+          },
+          "prefix": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 32
+          },
+          "lastFour": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
+          },
+          "status": {
+            "$ref": "#/components/schemas/CredentialStatus"
+          },
+          "createdAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "CreateCredentialResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CreateCredentialResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["credential", "oneTimeSecret"],
+        "properties": {
+          "credential": {
+            "$ref": "#/components/schemas/CredentialSummaryResponse"
+          },
+          "oneTimeSecret": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 200,
+            "description": "Displayed exactly once at creation or rotation time. Never returned from ordinary reads."
+          }
+        }
+      },
+      "CredentialListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/CredentialListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialSummaryResponse"
+            }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "OperationsSummaryResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/OperationsSummaryResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "serviceId",
+          "environment",
+          "serviceVersionStatus",
+          "deploymentStatus",
+          "calls",
+          "errors",
+          "p95Ms"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/ReleaseEnvironment"
+          },
+          "serviceVersionStatus": {
+            "description": "Lifecycle state of the published service version.",
+            "$ref": "#/components/schemas/ServiceVersionStatus"
+          },
+          "deploymentStatus": {
+            "description": "Lifecycle and health state of the current environment deployment.",
+            "$ref": "#/components/schemas/DeploymentStatus"
+          },
+          "calls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "p95Ms": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "TraceStage": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/TraceStage",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stage", "status", "durationMs"],
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "authn",
+              "authz",
+              "quota",
+              "data",
+              "capability",
+              "output",
+              "response"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "denied", "failed"]
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "errorCode": {
+            "type": "string"
+          }
+        }
+      },
+      "RequestTraceResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/RequestTraceResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["traceId", "requestId", "startedAt", "stages"],
+        "properties": {
+          "traceId": {
+            "$ref": "./common.v1.json#/components/schemas/TraceId"
+          },
+          "requestId": {
+            "$ref": "./common.v1.json#/components/schemas/RequestId"
+          },
+          "startedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceStage"
+            }
+          }
+        }
+      },
+      "TraceListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/TraceListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestTraceResponse"
+            }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "HighImpactActionRequest": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/HighImpactActionRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stepUpToken", "reason", "impact", "recoveryPlan"],
+        "properties": {
+          "stepUpToken": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 160
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "impact": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "recoveryPlan": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "HighImpactActionResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/HighImpactActionResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["actionId", "status", "requestedAt"],
+        "properties": {
+          "actionId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["accepted", "applied", "failed"]
+          },
+          "requestedAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          }
+        }
+      },
+      "AdminAuditEventResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/AdminAuditEventResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["auditEventId", "eventType", "occurredAt", "actorId"],
+        "properties": {
+          "auditEventId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "$ref": "./common.v1.json#/components/schemas/UtcDateTime"
+          },
+          "actorId": {
+            "$ref": "./common.v1.json#/components/schemas/OpaqueId"
+          }
+        }
+      },
+      "AdminAuditEventListResponse": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/AdminAuditEventListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "pageInfo"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAuditEventResponse"
+            }
+          },
+          "pageInfo": {
+            "$ref": "./common.v1.json#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "ServiceVersionStatus": {
+        "$id": "https://contracts.modular-mcp.local/schemas/release-ops/v1/ServiceVersionStatus",
+        "type": "string",
+        "enum": ["approved", "deploying", "published", "suspended", "retired"]
+      }
+    }
+  }
+}

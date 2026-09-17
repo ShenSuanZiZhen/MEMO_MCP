@@ -4,9 +4,25 @@ import { fileURLToPath } from "node:url";
 
 export const root = dirname(dirname(fileURLToPath(import.meta.url)));
 export const commonOpenApiPath = "packages/contracts/openapi/common.v1.json";
+export const controlPlaneOpenApiPath =
+  "packages/contracts/openapi/control-plane.v1.json";
+export const releaseOpsOpenApiPath =
+  "packages/contracts/openapi/release-ops.v1.json";
+export const definitionRegistrySchemaPath =
+  "packages/contracts/schema-registry/v1/definition.v1.schema.json";
 export const generatedTypesPath = "packages/contracts/src/generated/common.ts";
+export const generatedControlPlaneTypesPath =
+  "packages/contracts/src/generated/control-plane.ts";
+export const generatedReleaseOpsTypesPath =
+  "packages/contracts/src/generated/release-ops.ts";
 export const breakingBaselinePath =
   "packages/contracts/baselines/common.v1.public-surface.json";
+export const controlPlaneBreakingBaselinePath =
+  "packages/contracts/baselines/control-plane.v1.public-surface.json";
+export const releaseOpsBreakingBaselinePath =
+  "packages/contracts/baselines/release-ops.v1.public-surface.json";
+export const definitionBreakingBaselinePath =
+  "packages/contracts/baselines/definition.v1.public-surface.json";
 
 export async function readJson(path) {
   return JSON.parse(await readFile(join(root, path), "utf8"));
@@ -16,13 +32,33 @@ export async function readCommonOpenApi() {
   return readJson(commonOpenApiPath);
 }
 
+export async function readControlPlaneOpenApi() {
+  return readJson(controlPlaneOpenApiPath);
+}
+
+export async function readReleaseOpsOpenApi() {
+  return readJson(releaseOpsOpenApiPath);
+}
+
+export async function readDefinitionRegistrySchema() {
+  return readJson(definitionRegistrySchemaPath);
+}
+
 export function getSchemas(openApi) {
   return openApi.components?.schemas ?? {};
 }
 
 export function resolveRef(schemas, ref) {
   const prefix = "#/components/schemas/";
+  const commonPrefix = "./common.v1.json#/components/schemas/";
   if (!ref.startsWith(prefix)) {
+    if (ref.startsWith(commonPrefix)) {
+      const name = ref.slice(commonPrefix.length);
+      return {
+        name: name === "PageInfo" ? "CommonPageInfo" : name,
+        schema: { $ref: `#/components/schemas/${name}` },
+      };
+    }
     throw new Error(`unsupported external schema ref: ${ref}`);
   }
   const name = ref.slice(prefix.length);
@@ -203,6 +239,14 @@ export function findProhibitedErrorDetails(value, path = "$") {
 
 export function publicSurfaceFor(openApi) {
   const schemas = getSchemas(openApi);
+  return publicSurfaceForSchemaMap(schemas);
+}
+
+export function publicSurfaceForDefinitionRegistry(rootSchema) {
+  return publicSurfaceForSchemaMap(rootSchema.$defs ?? {});
+}
+
+function publicSurfaceForSchemaMap(schemas) {
   const surface = {};
   for (const [name, schema] of Object.entries(schemas)) {
     surface[name] = signatureFor(schema);
@@ -225,6 +269,8 @@ function signatureFor(schema) {
     "pattern",
     "minimum",
     "maximum",
+    "minItems",
+    "maxItems",
     "minLength",
     "maxLength",
     "additionalProperties",

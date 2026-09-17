@@ -1,0 +1,851 @@
+{
+  "__operations": {
+    "confirmPreview": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/preview-confirmations"
+    },
+    "createCredential": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/credentials"
+    },
+    "deployCandidate": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates/{candidateId}:deploy"
+    },
+    "getCandidate": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates/{candidateId}"
+    },
+    "getClientPreview": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/previews/client"
+    },
+    "getConsumerPreview": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/previews/consumer"
+    },
+    "getDeployment": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/deployments/{deploymentId}"
+    },
+    "getOperationsSummary": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/operations/summary"
+    },
+    "getOwnerPreview": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/definitions/{definitionId}/previews/owner"
+    },
+    "getRequestTrace": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/traces/{traceId}"
+    },
+    "getTestReport": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/test-reports/{testReportId}"
+    },
+    "getTestRun": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/test-runs/{testRunId}"
+    },
+    "listAdminAuditEvents": {
+      "method": "GET",
+      "path": "/api/v1/admin/audit-events"
+    },
+    "listCredentials": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/credentials"
+    },
+    "listRequestTraces": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/traces"
+    },
+    "pauseServiceCalls": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:pause"
+    },
+    "publishDeployment": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/deployments/{deploymentId}:publish"
+    },
+    "resumeNewAccess": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:resume-new-access"
+    },
+    "resumeServiceCalls": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:resume"
+    },
+    "retireServiceVersion": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/versions/{serviceVersion}:retire"
+    },
+    "reviewCandidate": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates/{candidateId}:review"
+    },
+    "revokeCredential": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}/credentials/{credentialId}:revoke"
+    },
+    "startTestRun": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/test-runs"
+    },
+    "stopNewAccess": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/services/{serviceId}:stop-new-access"
+    },
+    "submitCandidate": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/candidates"
+    }
+  },
+  "AdminAuditEventListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/AdminAuditEventResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "AdminAuditEventResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "actorId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "auditEventId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "eventType": {
+        "type": "string"
+      },
+      "occurredAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      }
+    },
+    "required": ["actorId", "auditEventId", "eventType", "occurredAt"],
+    "type": "object"
+  },
+  "CandidateResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "candidateId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "status": {
+        "ref": "#/components/schemas/CandidateStatus"
+      },
+      "submittedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "version": {
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidateId",
+      "definition",
+      "status",
+      "submittedAt",
+      "version"
+    ],
+    "type": "object"
+  },
+  "CandidateStatus": {
+    "enum": [
+      "approved",
+      "changes_requested",
+      "materials_required",
+      "rejected",
+      "submitted",
+      "withdrawn"
+    ],
+    "type": "string"
+  },
+  "ClientPreviewResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "prompts": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "resources": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "serverName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "tools": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": ["definition", "prompts", "resources", "serverName", "tools"],
+    "type": "object"
+  },
+  "ConsumerPreviewResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "nextAction": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "scenario": {
+        "ref": "#/components/schemas/ConsumerScenario"
+      },
+      "visibleCapabilities": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": ["definition", "nextAction", "scenario", "visibleCapabilities"],
+    "type": "object"
+  },
+  "ConsumerScenario": {
+    "enum": [
+      "anonymous",
+      "authenticated_denied",
+      "authorized",
+      "credential_expired",
+      "quota_exceeded",
+      "service_suspended",
+      "tool_denied"
+    ],
+    "type": "string"
+  },
+  "CreateCredentialRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "displayName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "expiresAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "kind": {
+        "ref": "#/components/schemas/CredentialKind"
+      },
+      "scopes": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": ["displayName", "kind", "scopes"],
+    "type": "object"
+  },
+  "CreateCredentialResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "credential": {
+        "ref": "#/components/schemas/CredentialSummaryResponse"
+      },
+      "oneTimeSecret": {
+        "maxLength": 200,
+        "minLength": 20,
+        "type": "string"
+      }
+    },
+    "required": ["credential", "oneTimeSecret"],
+    "type": "object"
+  },
+  "CredentialKind": {
+    "enum": ["api_key", "oauth_client"],
+    "type": "string"
+  },
+  "CredentialListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/CredentialSummaryResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "CredentialStatus": {
+    "enum": ["active", "expired", "revoked", "rotating"],
+    "type": "string"
+  },
+  "CredentialSummaryResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "createdAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "credentialId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "displayName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "environment": {
+        "ref": "#/components/schemas/ReleaseEnvironment"
+      },
+      "kind": {
+        "ref": "#/components/schemas/CredentialKind"
+      },
+      "lastFour": {
+        "maxLength": 4,
+        "minLength": 4,
+        "type": "string"
+      },
+      "prefix": {
+        "maxLength": 32,
+        "minLength": 4,
+        "type": "string"
+      },
+      "status": {
+        "ref": "#/components/schemas/CredentialStatus"
+      }
+    },
+    "required": [
+      "createdAt",
+      "credentialId",
+      "displayName",
+      "environment",
+      "kind",
+      "lastFour",
+      "prefix",
+      "status"
+    ],
+    "type": "object"
+  },
+  "DefinitionRef": {
+    "additionalProperties": false,
+    "properties": {
+      "definitionId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "digest": {
+        "ref": "#/components/schemas/Sha256Digest"
+      }
+    },
+    "required": ["definitionId", "digest"],
+    "type": "object"
+  },
+  "DeployCandidateRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      }
+    },
+    "required": ["definition"],
+    "type": "object"
+  },
+  "DeploymentResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "deploymentId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "stage": {
+        "enum": [
+          "bind_data",
+          "build",
+          "completed",
+          "health_check",
+          "load_version",
+          "open_endpoint",
+          "start_instance",
+          "verify_capabilities"
+        ],
+        "type": "string"
+      },
+      "status": {
+        "ref": "#/components/schemas/DeploymentStatus"
+      }
+    },
+    "required": ["definition", "deploymentId", "status"],
+    "type": "object"
+  },
+  "DeploymentStatus": {
+    "enum": [
+      "blocked",
+      "degraded",
+      "draining",
+      "healthy",
+      "provisioning",
+      "stopped",
+      "suspended"
+    ],
+    "type": "string"
+  },
+  "HighImpactActionRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "impact": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "recoveryPlan": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "stepUpToken": {
+        "maxLength": 160,
+        "minLength": 12,
+        "type": "string"
+      }
+    },
+    "required": ["impact", "reason", "recoveryPlan", "stepUpToken"],
+    "type": "object"
+  },
+  "HighImpactActionResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "actionId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "requestedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "status": {
+        "enum": ["accepted", "applied", "failed"],
+        "type": "string"
+      }
+    },
+    "required": ["actionId", "requestedAt", "status"],
+    "type": "object"
+  },
+  "OperationsSummaryResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "calls": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "deploymentStatus": {
+        "ref": "#/components/schemas/DeploymentStatus"
+      },
+      "environment": {
+        "ref": "#/components/schemas/ReleaseEnvironment"
+      },
+      "errors": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "p95Ms": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "serviceId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "serviceVersionStatus": {
+        "ref": "#/components/schemas/ServiceVersionStatus"
+      }
+    },
+    "required": [
+      "calls",
+      "deploymentStatus",
+      "environment",
+      "errors",
+      "p95Ms",
+      "serviceId",
+      "serviceVersionStatus"
+    ],
+    "type": "object"
+  },
+  "OwnerPreviewResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "blockingIssues": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "warnings": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": ["blockingIssues", "definition", "warnings"],
+    "type": "object"
+  },
+  "PreviewConfirmationRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "confirmedViews": {
+        "items": {
+          "ref": "#/components/schemas/PreviewView"
+        },
+        "type": "array"
+      },
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      }
+    },
+    "required": ["confirmedViews", "definition"],
+    "type": "object"
+  },
+  "PreviewConfirmationResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "confirmedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "confirmedViews": {
+        "items": {
+          "ref": "#/components/schemas/PreviewView"
+        },
+        "type": "array"
+      },
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      }
+    },
+    "required": ["confirmedAt", "confirmedViews", "definition"],
+    "type": "object"
+  },
+  "PreviewView": {
+    "enum": ["client", "consumer", "owner"],
+    "type": "string"
+  },
+  "PublishDeploymentRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "impact": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "recoveryPlan": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "serviceVersion": {
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "type": "string"
+      },
+      "stepUpToken": {
+        "maxLength": 160,
+        "minLength": 12,
+        "type": "string"
+      }
+    },
+    "required": [
+      "definition",
+      "impact",
+      "reason",
+      "recoveryPlan",
+      "serviceVersion",
+      "stepUpToken"
+    ],
+    "type": "object"
+  },
+  "ReleaseEnvironment": {
+    "enum": ["development", "production", "test"],
+    "type": "string"
+  },
+  "RequestTraceResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "requestId": {
+        "ref": "./common.v1.json#/components/schemas/RequestId"
+      },
+      "stages": {
+        "items": {
+          "ref": "#/components/schemas/TraceStage"
+        },
+        "type": "array"
+      },
+      "startedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "traceId": {
+        "ref": "./common.v1.json#/components/schemas/TraceId"
+      }
+    },
+    "required": ["requestId", "stages", "startedAt", "traceId"],
+    "type": "object"
+  },
+  "ReviewCandidateRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "comments": {
+        "maxLength": 2000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "decision": {
+        "enum": [
+          "approved",
+          "changes_requested",
+          "materials_required",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
+      }
+    },
+    "required": ["comments", "decision"],
+    "type": "object"
+  },
+  "ServiceReleaseResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "environment": {
+        "ref": "#/components/schemas/ReleaseEnvironment"
+      },
+      "mcpUrl": {
+        "format": "uri",
+        "type": "string"
+      },
+      "serviceId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "serviceVersion": {
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "type": "string"
+      },
+      "status": {
+        "ref": "#/components/schemas/ServiceVersionStatus"
+      }
+    },
+    "required": [
+      "definition",
+      "environment",
+      "mcpUrl",
+      "serviceId",
+      "serviceVersion",
+      "status"
+    ],
+    "type": "object"
+  },
+  "ServiceVersionStatus": {
+    "enum": ["approved", "deploying", "published", "retired", "suspended"],
+    "type": "string"
+  },
+  "Sha256Digest": {
+    "pattern": "^sha256:[a-f0-9]{64}$",
+    "type": "string"
+  },
+  "StartTestRunRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "mode": {
+        "ref": "#/components/schemas/TestMode"
+      }
+    },
+    "required": ["definition", "mode"],
+    "type": "object"
+  },
+  "SubmitCandidateRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "checklist": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "releaseNotes": {
+        "maxLength": 2000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "version": {
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "type": "string"
+      }
+    },
+    "required": ["checklist", "definition", "releaseNotes", "version"],
+    "type": "object"
+  },
+  "TestMode": {
+    "enum": ["custom", "full", "quick"],
+    "type": "string"
+  },
+  "TestReportResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "createdAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "result": {
+        "enum": ["failed", "passed"],
+        "type": "string"
+      },
+      "securityLogRef": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "testReportId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      }
+    },
+    "required": [
+      "createdAt",
+      "definition",
+      "result",
+      "securityLogRef",
+      "testReportId"
+    ],
+    "type": "object"
+  },
+  "TestRunResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "ref": "#/components/schemas/DefinitionRef"
+      },
+      "failed": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "mode": {
+        "ref": "#/components/schemas/TestMode"
+      },
+      "passed": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "status": {
+        "ref": "#/components/schemas/TestStatus"
+      },
+      "testRunId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      }
+    },
+    "required": [
+      "definition",
+      "failed",
+      "mode",
+      "passed",
+      "status",
+      "testRunId"
+    ],
+    "type": "object"
+  },
+  "TestStatus": {
+    "enum": ["accepted", "cancelled", "failed", "passed", "running"],
+    "type": "string"
+  },
+  "TraceListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/RequestTraceResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "TraceStage": {
+    "additionalProperties": false,
+    "properties": {
+      "durationMs": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "errorCode": {
+        "type": "string"
+      },
+      "stage": {
+        "enum": [
+          "authn",
+          "authz",
+          "capability",
+          "data",
+          "output",
+          "quota",
+          "response"
+        ],
+        "type": "string"
+      },
+      "status": {
+        "enum": ["denied", "failed", "passed"],
+        "type": "string"
+      }
+    },
+    "required": ["durationMs", "stage", "status"],
+    "type": "object"
+  }
+}

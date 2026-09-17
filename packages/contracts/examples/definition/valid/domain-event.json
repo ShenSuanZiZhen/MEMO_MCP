@@ -1,0 +1,20 @@
+{
+  "eventId": "evt_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "eventType": "definition.published.v1",
+  "occurredAt": "2026-09-16T08:43:51Z",
+  "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "aggregateId": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "aggregateVersion": 1,
+  "traceId": "trace_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "idempotencyKey": "idem_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+  "data": {
+    "refs": [
+      {
+        "kind": "definition",
+        "id": "def_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+        "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    ]
+  }
+}

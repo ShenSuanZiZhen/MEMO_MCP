@@ -1,0 +1,401 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.modular-mcp.local/schemas/definition/v1/registry",
+  "title": "Modular MCP Definition Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "OpaqueId": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 160,
+      "pattern": "^[a-z][a-z0-9]*_[A-Za-z0-9_-]{8,128}$"
+    },
+    "UtcDateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$"
+    },
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "ExactVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
+    "Environment": {
+      "type": "string",
+      "enum": ["development", "test", "production"]
+    },
+    "ModuleType": {
+      "type": "string",
+      "enum": ["source", "capability", "output", "prompt"]
+    },
+    "RiskLevel": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "ServiceDefinition": {
+      "$id": "https://contracts.modular-mcp.local/schemas/definition/v1/ServiceDefinition",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metadata",
+        "identity",
+        "dataBindings",
+        "modules",
+        "capabilities",
+        "policy",
+        "limits",
+        "outputPolicy",
+        "runtime"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "serviceId", "version", "environment"],
+          "properties": {
+            "schemaVersion": { "type": "string", "enum": ["definition.v1"] },
+            "serviceId": { "$ref": "#/$defs/OpaqueId" },
+            "version": { "$ref": "#/$defs/ExactVersion" },
+            "environment": { "$ref": "#/$defs/Environment" }
+          }
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["workspaceId", "projectId"],
+          "properties": {
+            "workspaceId": { "$ref": "#/$defs/OpaqueId" },
+            "projectId": { "$ref": "#/$defs/OpaqueId" }
+          }
+        },
+        "dataBindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sourceId",
+              "dataVersionId",
+              "dataVersionDigest",
+              "allowedScopes"
+            ],
+            "properties": {
+              "sourceId": { "$ref": "#/$defs/OpaqueId" },
+              "dataVersionId": { "$ref": "#/$defs/OpaqueId" },
+              "dataVersionDigest": { "$ref": "#/$defs/Sha256Digest" },
+              "allowedScopes": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        "modules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "moduleId",
+              "exactVersion",
+              "artifactDigest",
+              "normalizedConfig"
+            ],
+            "properties": {
+              "moduleId": {
+                "type": "string",
+                "pattern": "^[a-z]+\\.[a-z0-9-]+$"
+              },
+              "exactVersion": { "$ref": "#/$defs/ExactVersion" },
+              "artifactDigest": { "$ref": "#/$defs/Sha256Digest" },
+              "normalizedConfig": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tools", "resources", "prompts"],
+          "properties": {
+            "tools": { "type": "array", "items": { "type": "string" } },
+            "resources": { "type": "array", "items": { "type": "string" } },
+            "prompts": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policyVersionId", "policyDigest", "audience", "grants"],
+          "properties": {
+            "policyVersionId": { "$ref": "#/$defs/OpaqueId" },
+            "policyDigest": { "$ref": "#/$defs/Sha256Digest" },
+            "audience": { "type": "string", "minLength": 1 },
+            "grants": { "type": "array", "items": { "type": "string" } },
+            "timeConstraints": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "networkConstraints": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "limits": { "$ref": "#/$defs/EffectiveLimits" },
+        "outputPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowedFields", "redactions", "citations"],
+          "properties": {
+            "allowedFields": { "type": "array", "items": { "type": "string" } },
+            "redactions": { "type": "array", "items": { "type": "string" } },
+            "citations": { "type": "boolean" }
+          }
+        },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["builderVersion", "protocolVersion"],
+          "properties": {
+            "builderVersion": { "$ref": "#/$defs/ExactVersion" },
+            "protocolVersion": { "type": "string", "enum": ["mcp.2025-06-18"] }
+          }
+        }
+      }
+    },
+    "ModuleManifest": {
+      "$id": "https://contracts.modular-mcp.local/schemas/definition/v1/ModuleManifest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "type",
+        "apiVersion",
+        "implementation",
+        "requires",
+        "conflicts",
+        "provides",
+        "permissions",
+        "risk",
+        "limits",
+        "artifactDigest",
+        "signature"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z]+\\.[a-z0-9-]+$" },
+        "version": { "$ref": "#/$defs/ExactVersion" },
+        "type": { "$ref": "#/$defs/ModuleType" },
+        "apiVersion": { "type": "string", "enum": ["studio.mcp/v1"] },
+        "implementation": {
+          "type": "string",
+          "pattern": "^builtin:[a-z0-9-]+@sha256:[a-f0-9]{64}$"
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+\\.[a-z0-9-]+@\\d+\\.\\d+\\.\\d+$"
+          }
+        },
+        "conflicts": { "type": "array", "items": { "type": "string" } },
+        "provides": { "type": "array", "items": { "type": "string" } },
+        "configSchemaRef": { "type": "string" },
+        "inputSchemaRef": { "type": "string" },
+        "outputSchemaRef": { "type": "string" },
+        "permissions": { "type": "array", "items": { "type": "string" } },
+        "risk": { "$ref": "#/$defs/RiskLevel" },
+        "limits": { "$ref": "#/$defs/EffectiveLimits" },
+        "artifactDigest": { "$ref": "#/$defs/Sha256Digest" },
+        "signature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["keyId", "value"],
+          "properties": {
+            "keyId": { "type": "string", "minLength": 1 },
+            "value": { "type": "string", "minLength": 32 }
+          }
+        }
+      }
+    },
+    "PolicyInput": {
+      "$id": "https://contracts.modular-mcp.local/schemas/definition/v1/PolicyInput",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor",
+        "credential",
+        "workspaceId",
+        "projectId",
+        "environment",
+        "serviceVersion",
+        "capability",
+        "dataScope",
+        "network",
+        "time",
+        "serviceState"
+      ],
+      "properties": {
+        "actor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["actorId", "roles"],
+          "properties": {
+            "actorId": { "$ref": "#/$defs/OpaqueId" },
+            "roles": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "credential": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["credentialId", "kind", "status", "scopes"],
+          "properties": {
+            "credentialId": { "$ref": "#/$defs/OpaqueId" },
+            "kind": { "type": "string", "enum": ["api_key", "oauth_client"] },
+            "status": {
+              "type": "string",
+              "enum": ["active", "rotating", "revoked", "expired"]
+            },
+            "scopes": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "workspaceId": { "$ref": "#/$defs/OpaqueId" },
+        "projectId": { "$ref": "#/$defs/OpaqueId" },
+        "environment": { "$ref": "#/$defs/Environment" },
+        "serviceVersion": { "$ref": "#/$defs/ExactVersion" },
+        "capability": { "type": "string", "minLength": 1 },
+        "dataScope": { "type": "array", "items": { "type": "string" } },
+        "network": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source"],
+          "properties": {
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "Server-derived normalized network source or zone; never a URL or request body."
+            }
+          }
+        },
+        "time": { "$ref": "#/$defs/UtcDateTime" },
+        "serviceState": {
+          "type": "string",
+          "enum": ["healthy", "degraded", "suspended", "retired"]
+        }
+      }
+    },
+    "PolicyDecision": {
+      "$id": "https://contracts.modular-mcp.local/schemas/definition/v1/PolicyDecision",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allow",
+        "reason",
+        "effectiveScopes",
+        "effectiveLimits",
+        "policyVersion",
+        "decisionId"
+      ],
+      "properties": {
+        "allow": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 },
+        "effectiveScopes": { "type": "array", "items": { "type": "string" } },
+        "effectiveLimits": { "$ref": "#/$defs/EffectiveLimits" },
+        "policyVersion": { "$ref": "#/$defs/OpaqueId" },
+        "decisionId": { "$ref": "#/$defs/OpaqueId" }
+      }
+    },
+    "DomainEvent": {
+      "$id": "https://contracts.modular-mcp.local/schemas/definition/v1/DomainEvent",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "eventType",
+        "occurredAt",
+        "workspaceId",
+        "projectId",
+        "aggregateId",
+        "aggregateVersion",
+        "traceId",
+        "idempotencyKey",
+        "data"
+      ],
+      "properties": {
+        "eventId": { "$ref": "#/$defs/OpaqueId" },
+        "eventType": {
+          "type": "string",
+          "pattern": "^[a-z]+(?:\\.[a-z]+)*\\.v[0-9]+$"
+        },
+        "occurredAt": { "$ref": "#/$defs/UtcDateTime" },
+        "workspaceId": { "$ref": "#/$defs/OpaqueId" },
+        "projectId": { "$ref": "#/$defs/OpaqueId" },
+        "aggregateId": { "$ref": "#/$defs/OpaqueId" },
+        "aggregateVersion": { "type": "integer", "minimum": 1 },
+        "traceId": { "type": "string", "minLength": 8, "maxLength": 128 },
+        "idempotencyKey": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 160
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["refs"],
+          "properties": {
+            "refs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "id", "digest"],
+                "properties": {
+                  "kind": { "type": "string", "minLength": 1 },
+                  "id": { "$ref": "#/$defs/OpaqueId" },
+                  "digest": { "$ref": "#/$defs/Sha256Digest" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "EffectiveLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestsPerMinute",
+        "maxConcurrency",
+        "timeoutMs",
+        "maxResults",
+        "maxSections",
+        "maxResponseBytes"
+      ],
+      "properties": {
+        "requestsPerMinute": { "type": "integer", "minimum": 1 },
+        "maxConcurrency": { "type": "integer", "minimum": 1 },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "maxResults": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "maxSections": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "maxResponseBytes": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

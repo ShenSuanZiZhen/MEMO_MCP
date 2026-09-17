@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "schemaVersion": "definition.v1",
+    "serviceId": "svc_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+    "version": "1.0.0",
+    "environment": "production"
+  },
+  "identity": {
+    "workspaceId": "ws_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+    "projectId": "prj_01HZY8T3M6R7P9K2Q4V5X6Y7Z8"
+  },
+  "dataBindings": [
+    {
+      "sourceId": "ds_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+      "dataVersionId": "dv_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+      "allowedScopes": ["documents:search"]
+    }
+  ],
+  "modules": [
+    {
+      "moduleId": "capability.search-documents",
+      "exactVersion": "1.2.3",
+      "artifactDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "normalizedConfig": {}
+    }
+  ],
+  "capabilities": {
+    "tools": ["search_documents"],
+    "resources": [],
+    "prompts": []
+  },
+  "policy": {
+    "policyVersionId": "pol_01HZY8T3M6R7P9K2Q4V5X6Y7Z8",
+    "policyDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "audience": "internal_members",
+    "grants": ["tool.search_documents"]
+  },
+  "limits": {
+    "requestsPerMinute": 60,
+    "maxConcurrency": 5,
+    "timeoutMs": 15000,
+    "maxResults": 10,
+    "maxSections": 5,
+    "maxResponseBytes": 65536
+  },
+  "outputPolicy": {
+    "allowedFields": ["title"],
+    "redactions": [],
+    "citations": true
+  },
+  "runtime": {
+    "builderVersion": "1.0.0",
+    "protocolVersion": "mcp.2025-06-18"
+  }
+}

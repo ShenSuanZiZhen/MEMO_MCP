@@ -1,0 +1,779 @@
+{
+  "__operations": {
+    "archiveProject": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}:archive"
+    },
+    "createDataSource": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources"
+    },
+    "createDraft": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/drafts"
+    },
+    "createProject": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects"
+    },
+    "createWorkspace": {
+      "method": "POST",
+      "path": "/api/v1/workspaces"
+    },
+    "getDataSource": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources/{dataSourceId}"
+    },
+    "getDataVersion": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-versions/{dataVersionId}"
+    },
+    "getDraft": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/drafts/{draftId}"
+    },
+    "getJob": {
+      "method": "GET",
+      "path": "/api/v1/jobs/{jobId}"
+    },
+    "getModuleCatalogVersion": {
+      "method": "GET",
+      "path": "/api/v1/module-catalog/modules/{moduleId}/versions/{moduleVersion}"
+    },
+    "getProject": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}"
+    },
+    "getWorkspace": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}"
+    },
+    "listDataSources": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources"
+    },
+    "listDrafts": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/drafts"
+    },
+    "listModuleCatalog": {
+      "method": "GET",
+      "path": "/api/v1/module-catalog/modules"
+    },
+    "listProjects": {
+      "method": "GET",
+      "path": "/api/v1/workspaces/{workspaceId}/projects"
+    },
+    "listWorkspaces": {
+      "method": "GET",
+      "path": "/api/v1/workspaces"
+    },
+    "restoreProject": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}:restore"
+    },
+    "startDataVersionProcessing": {
+      "method": "POST",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/data-sources/{dataSourceId}/versions"
+    },
+    "updateDraft": {
+      "method": "PATCH",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}/environments/{environment}/drafts/{draftId}"
+    },
+    "updateProject": {
+      "method": "PATCH",
+      "path": "/api/v1/workspaces/{workspaceId}/projects/{projectId}"
+    }
+  },
+  "CreateDataSourceRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "displayName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "kind": {
+        "ref": "#/components/schemas/DataSourceKind"
+      },
+      "rights": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+      },
+      "sensitivity": {
+        "ref": "#/components/schemas/Sensitivity"
+      },
+      "versionStrategy": {
+        "ref": "#/components/schemas/VersionStrategy"
+      }
+    },
+    "required": [
+      "displayName",
+      "kind",
+      "rights",
+      "sensitivity",
+      "versionStrategy"
+    ],
+    "type": "object"
+  },
+  "CreateDraftRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "creationMode": {
+        "enum": ["blank", "copy_version", "template"],
+        "type": "string"
+      },
+      "goal": {
+        "ref": "#/components/schemas/GoalSelection"
+      },
+      "name": {
+        "maxLength": 60,
+        "minLength": 2,
+        "type": "string"
+      },
+      "sourceVersionId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "templateId": {
+        "pattern": "^tpl_[a-z0-9_]+_v[0-9]+$",
+        "type": "string"
+      }
+    },
+    "required": ["creationMode", "name"],
+    "type": "object"
+  },
+  "CreateProjectRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "defaultEnvironment": {
+        "ref": "#/components/schemas/Environment"
+      },
+      "defaultRegion": {
+        "maxLength": 32,
+        "minLength": 2,
+        "type": "string"
+      },
+      "description": {
+        "maxLength": 500,
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": ["defaultEnvironment", "defaultRegion", "name"],
+    "type": "object"
+  },
+  "CreateWorkspaceRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "displayName": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "kind": {
+        "ref": "#/components/schemas/WorkspaceKind"
+      },
+      "purpose": {
+        "maxLength": 120,
+        "type": "string"
+      },
+      "region": {
+        "maxLength": 32,
+        "minLength": 2,
+        "type": "string"
+      }
+    },
+    "required": ["displayName", "kind"],
+    "type": "object"
+  },
+  "CredentialPreview": {
+    "additionalProperties": false,
+    "properties": {
+      "authType": {
+        "enum": [
+          "api_key",
+          "basic",
+          "bearer",
+          "none",
+          "oauth_client",
+          "readonly_database"
+        ],
+        "type": "string"
+      },
+      "lastFour": {
+        "maxLength": 4,
+        "minLength": 4,
+        "type": "string"
+      },
+      "updatedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      }
+    },
+    "required": ["authType", "lastFour", "updatedAt"],
+    "type": "object"
+  },
+  "DataSourceKind": {
+    "enum": ["file_upload", "http_api", "object_storage", "readonly_database"],
+    "type": "string"
+  },
+  "DataSourceListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/DataSourceResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "DataSourceResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "createdAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "credentialPreview": {
+        "ref": "#/components/schemas/CredentialPreview"
+      },
+      "dataSourceId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "displayName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "environment": {
+        "ref": "#/components/schemas/Environment"
+      },
+      "kind": {
+        "ref": "#/components/schemas/DataSourceKind"
+      },
+      "projectId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "sensitivity": {
+        "ref": "#/components/schemas/Sensitivity"
+      },
+      "updatedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "versionStrategy": {
+        "ref": "#/components/schemas/VersionStrategy"
+      }
+    },
+    "required": [
+      "createdAt",
+      "dataSourceId",
+      "displayName",
+      "environment",
+      "kind",
+      "projectId",
+      "sensitivity",
+      "updatedAt",
+      "versionStrategy"
+    ],
+    "type": "object"
+  },
+  "DataVersionResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "completedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "createdAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "dataSourceId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "dataVersionId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "environment": {
+        "ref": "#/components/schemas/Environment"
+      },
+      "error": {
+        "ref": "./common.v1.json#/components/schemas/ErrorEnvelope"
+      },
+      "processingStage": {
+        "ref": "#/components/schemas/ProcessingStage"
+      },
+      "status": {
+        "ref": "#/components/schemas/DataVersionStatus"
+      }
+    },
+    "required": [
+      "createdAt",
+      "dataSourceId",
+      "dataVersionId",
+      "environment",
+      "processingStage",
+      "status"
+    ],
+    "type": "object"
+  },
+  "DataVersionStatus": {
+    "enum": [
+      "cancelled",
+      "completed",
+      "created",
+      "expired",
+      "failed",
+      "partial",
+      "processing",
+      "uploaded",
+      "uploading"
+    ],
+    "type": "string"
+  },
+  "DraftListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/DraftResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "DraftResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "currentStep": {
+        "ref": "#/components/schemas/WizardStep"
+      },
+      "draftId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "environment": {
+        "ref": "#/components/schemas/Environment"
+      },
+      "goal": {
+        "ref": "#/components/schemas/GoalSelection"
+      },
+      "name": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "projectId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "revision": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "status": {
+        "ref": "#/components/schemas/DraftStatus"
+      },
+      "updatedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      }
+    },
+    "required": [
+      "currentStep",
+      "draftId",
+      "environment",
+      "name",
+      "projectId",
+      "revision",
+      "status",
+      "updatedAt"
+    ],
+    "type": "object"
+  },
+  "DraftStatus": {
+    "enum": [
+      "building",
+      "built",
+      "editing",
+      "ready",
+      "submitted",
+      "validating"
+    ],
+    "type": "string"
+  },
+  "Environment": {
+    "enum": ["development", "production", "test"],
+    "type": "string"
+  },
+  "GoalSelection": {
+    "additionalProperties": false,
+    "properties": {
+      "audience": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "capabilities": {
+        "items": {
+          "enum": [
+            "browse_catalog",
+            "read_sections",
+            "search_content",
+            "verify_citation",
+            "view_metadata"
+          ],
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "description": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "prohibitedUses": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": ["audience", "capabilities", "description", "prohibitedUses"],
+    "type": "object"
+  },
+  "ModuleKind": {
+    "enum": ["capability", "output", "prompt", "source"],
+    "type": "string"
+  },
+  "ModuleListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/ModuleSummary"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "ModuleSummary": {
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "displayName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "kind": {
+        "ref": "#/components/schemas/ModuleKind"
+      },
+      "moduleId": {
+        "pattern": "^mod_[a-z0-9_]+$",
+        "type": "string"
+      },
+      "moduleVersion": {
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "type": "string"
+      },
+      "reviewStatus": {
+        "ref": "#/components/schemas/ReviewStatus"
+      },
+      "riskLevel": {
+        "enum": ["high", "low", "medium"],
+        "type": "string"
+      }
+    },
+    "required": [
+      "capabilities",
+      "displayName",
+      "kind",
+      "moduleId",
+      "moduleVersion",
+      "reviewStatus",
+      "riskLevel"
+    ],
+    "type": "object"
+  },
+  "ModuleVersionResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "capabilities": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "conflicts": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "dependencies": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "displayName": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+      },
+      "kind": {
+        "ref": "#/components/schemas/ModuleKind"
+      },
+      "moduleId": {
+        "pattern": "^mod_[a-z0-9_]+$",
+        "type": "string"
+      },
+      "moduleVersion": {
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "type": "string"
+      },
+      "reviewStatus": {
+        "ref": "#/components/schemas/ReviewStatus"
+      },
+      "riskLevel": {
+        "enum": ["high", "low", "medium"],
+        "type": "string"
+      }
+    },
+    "required": [
+      "capabilities",
+      "dependencies",
+      "displayName",
+      "kind",
+      "moduleId",
+      "moduleVersion",
+      "reviewStatus",
+      "riskLevel"
+    ],
+    "type": "object"
+  },
+  "ProcessingStage": {
+    "enum": [
+      "chunk",
+      "completed",
+      "format_detect",
+      "index",
+      "normalize",
+      "parse",
+      "security_scan",
+      "upload"
+    ],
+    "type": "string"
+  },
+  "ProjectListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/ProjectResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "ProjectResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "createdAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "defaultEnvironment": {
+        "ref": "#/components/schemas/Environment"
+      },
+      "defaultRegion": {
+        "maxLength": 32,
+        "minLength": 2,
+        "type": "string"
+      },
+      "description": {
+        "maxLength": 500,
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "projectId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      },
+      "status": {
+        "ref": "#/components/schemas/ProjectStatus"
+      },
+      "updatedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "workspaceId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      }
+    },
+    "required": [
+      "createdAt",
+      "defaultEnvironment",
+      "defaultRegion",
+      "name",
+      "projectId",
+      "status",
+      "updatedAt",
+      "workspaceId"
+    ],
+    "type": "object"
+  },
+  "ProjectStatus": {
+    "enum": ["active", "archived"],
+    "type": "string"
+  },
+  "ReviewStatus": {
+    "enum": ["approved", "blocked", "deprecated", "submitted", "testing"],
+    "type": "string"
+  },
+  "Sensitivity": {
+    "enum": ["confidential", "internal", "public"],
+    "type": "string"
+  },
+  "StartDataVersionProcessingRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "expectedFileCount": {
+        "maximum": 20,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  },
+  "UpdateDraftRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "currentStep": {
+        "ref": "#/components/schemas/WizardStep"
+      },
+      "patch": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "revision": {
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "required": ["patch", "revision"],
+    "type": "object"
+  },
+  "UpdateProjectRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "description": {
+        "maxLength": 500,
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "VersionStrategy": {
+    "enum": ["controlled_follow", "fixed", "manual_confirm_before_publish"],
+    "type": "string"
+  },
+  "WizardStep": {
+    "enum": [
+      "configuration",
+      "data",
+      "goal",
+      "modules",
+      "preview",
+      "publish",
+      "test"
+    ],
+    "type": "string"
+  },
+  "WorkspaceKind": {
+    "enum": ["personal", "team"],
+    "type": "string"
+  },
+  "WorkspaceListResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "items": {
+          "ref": "#/components/schemas/WorkspaceResponse"
+        },
+        "type": "array"
+      },
+      "pageInfo": {
+        "ref": "./common.v1.json#/components/schemas/PageInfo"
+      }
+    },
+    "required": ["items", "pageInfo"],
+    "type": "object"
+  },
+  "WorkspaceResponse": {
+    "additionalProperties": false,
+    "properties": {
+      "createdAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "displayName": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "kind": {
+        "ref": "#/components/schemas/WorkspaceKind"
+      },
+      "region": {
+        "maxLength": 32,
+        "minLength": 2,
+        "type": "string"
+      },
+      "updatedAt": {
+        "ref": "./common.v1.json#/components/schemas/UtcDateTime"
+      },
+      "workspaceId": {
+        "ref": "./common.v1.json#/components/schemas/OpaqueId"
+      }
+    },
+    "required": [
+      "createdAt",
+      "displayName",
+      "kind",
+      "updatedAt",
+      "workspaceId"
+    ],
+    "type": "object"
+  }
+}
