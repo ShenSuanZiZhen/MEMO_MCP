@@ -1,0 +1,48 @@
+DELETE FROM app.schema_migrations WHERE version = '0002_release_ops';
+
+DROP TABLE IF EXISTS app.audit_events;
+DROP TABLE IF EXISTS app.quota_buckets;
+DROP TABLE IF EXISTS app.usage_events;
+DROP TABLE IF EXISTS app.request_traces;
+DROP TABLE IF EXISTS app.credential_rotations;
+DROP TABLE IF EXISTS app.credential_secrets;
+DROP TABLE IF EXISTS app.credentials;
+DROP TABLE IF EXISTS app.policy_versions;
+DROP TABLE IF EXISTS app.access_policies;
+DROP TABLE IF EXISTS app.deployment_events;
+DROP TABLE IF EXISTS app.deployments;
+DROP TABLE IF EXISTS app.service_versions;
+DROP TABLE IF EXISTS app.test_cases;
+DROP TABLE IF EXISTS app.test_runs;
+DROP TABLE IF EXISTS app.candidates;
+DROP TABLE IF EXISTS app.definition_modules;
+DROP TABLE IF EXISTS app.service_definitions;
+DROP TABLE IF EXISTS app.services;
+DROP TABLE IF EXISTS app.module_versions;
+DROP TABLE IF EXISTS app.modules;
+
+DROP FUNCTION IF EXISTS app.protect_deployment_event_insert();
+DROP FUNCTION IF EXISTS app.protect_test_run_update();
+DROP FUNCTION IF EXISTS app.require_matching_deployment_event();
+DROP FUNCTION IF EXISTS app.protect_deployment_update();
+DROP FUNCTION IF EXISTS app.protect_credential_update();
+DROP FUNCTION IF EXISTS app.protect_service_version_update();
+DROP FUNCTION IF EXISTS app.protect_candidate_update();
+DROP FUNCTION IF EXISTS app.protect_module_version_update();
+DROP FUNCTION IF EXISTS app.is_valid_deployment_transition(app.deployment_status, app.deployment_status);
+DROP FUNCTION IF EXISTS app.reject_audit_event_change();
+DROP FUNCTION IF EXISTS app.reject_immutable_row_change();
+
+DROP TYPE IF EXISTS app.usage_unit;
+DROP TYPE IF EXISTS app.request_trace_status;
+DROP TYPE IF EXISTS app.rotation_status;
+DROP TYPE IF EXISTS app.credential_status;
+DROP TYPE IF EXISTS app.credential_kind;
+DROP TYPE IF EXISTS app.policy_version_status;
+DROP TYPE IF EXISTS app.deployment_status;
+DROP TYPE IF EXISTS app.service_version_status;
+DROP TYPE IF EXISTS app.test_case_status;
+DROP TYPE IF EXISTS app.test_run_status;
+DROP TYPE IF EXISTS app.candidate_status;
+DROP TYPE IF EXISTS app.module_version_status;
+DROP TYPE IF EXISTS app.module_kind;

@@ -6,6 +6,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build tsconfig.json"
+    "build": "tsc --build tsconfig.json && node scripts/verify-public-api.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "rollback": "node scripts/rollback.mjs",
+    "test:integration": "node scripts/integration-test.mjs"
   }
 }
