@@ -13,6 +13,8 @@ export const definitionRegistrySchemaPath =
 export const generatedTypesPath = "packages/contracts/src/generated/common.ts";
 export const generatedControlPlaneTypesPath =
   "packages/contracts/src/generated/control-plane.ts";
+export const generatedControlPlaneDecodersPath =
+  "packages/contracts/src/generated/control-plane-decoders.ts";
 export const generatedReleaseOpsTypesPath =
   "packages/contracts/src/generated/release-ops.ts";
 export const breakingBaselinePath =
@@ -23,6 +25,8 @@ export const releaseOpsBreakingBaselinePath =
   "packages/contracts/baselines/release-ops.v1.public-surface.json";
 export const definitionBreakingBaselinePath =
   "packages/contracts/baselines/definition.v1.public-surface.json";
+export const controlPlaneDecoderBreakingBaselinePath =
+  "packages/contracts/baselines/control-plane-decoders.public-surface.json";
 
 export async function readJson(path) {
   return JSON.parse(await readFile(join(root, path), "utf8"));
@@ -123,8 +127,8 @@ export function validateValue({ value, schema, schemas, path = "$" }) {
     if (schema.pattern && !new RegExp(schema.pattern).test(value)) {
       add(`expected pattern ${schema.pattern}`);
     }
-    if (schema.format === "date-time" && Number.isNaN(Date.parse(value))) {
-      add("expected RFC3339 date-time");
+    if (schema.format === "date-time" && !isStrictUtcDateTime(value)) {
+      add("expected valid RFC3339 UTC date-time");
     }
     return errors;
   }
@@ -300,6 +304,54 @@ function signatureFor(schema) {
 
 export function stableJson(value) {
   return `${JSON.stringify(sortDeep(value), null, 2)}\n`;
+}
+
+export function isStrictUtcDateTime(value) {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?Z$/.exec(
+      value,
+    );
+  if (match === null) {
+    return false;
+  }
+
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText] =
+    match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+
+  if (month < 1 || month > 12) {
+    return false;
+  }
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return false;
+  }
+  const lastDay = daysInMonth(year, month);
+  if (day < 1 || day > lastDay) {
+    return false;
+  }
+  if (second < 0 || second > 60) {
+    return false;
+  }
+  if (second === 60) {
+    return hour === 23 && minute === 59 && day === lastDay;
+  }
+  return true;
+}
+
+function daysInMonth(year, month) {
+  if (month === 2) {
+    return isLeapYear(year) ? 29 : 28;
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
+
+function isLeapYear(year) {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
 function sortDeep(value) {

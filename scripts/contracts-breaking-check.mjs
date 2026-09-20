@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   breakingBaselinePath,
+  controlPlaneDecoderBreakingBaselinePath,
   controlPlaneBreakingBaselinePath,
   definitionBreakingBaselinePath,
   publicSurfaceFor,
@@ -14,6 +15,7 @@ import {
   root,
   stableJson,
 } from "./contracts-lib.mjs";
+import { decoderPublicSurfaceForSource } from "./contracts-runtime-decoders-lib.mjs";
 
 const write = process.argv.includes("--write");
 const failures = [];
@@ -35,6 +37,19 @@ const documents = [
     current: publicSurfaceForDefinitionRegistry(
       await readDefinitionRegistrySchema(),
     ),
+  },
+  {
+    baselinePath: controlPlaneDecoderBreakingBaselinePath,
+    current: decoderPublicSurfaceForSource(
+      await readFile(
+        join(
+          root,
+          "packages/contracts/src/generated/control-plane-decoders.ts",
+        ),
+        "utf8",
+      ),
+    ),
+    kind: "decoder",
   },
 ];
 
@@ -65,6 +80,10 @@ for (const document of documents) {
       document.current.__operations,
     );
   }
+  if (document.kind === "decoder") {
+    compareDecoderSurface(document.baselinePath, baseline, document.current);
+    continue;
+  }
   for (const [schemaName, baselineSchema] of Object.entries(baseline)) {
     if (schemaName === "__operations") {
       continue;
@@ -81,6 +100,29 @@ for (const document of documents) {
       baselineSchema,
       currentSchema,
     );
+  }
+}
+
+function compareDecoderSurface(path, baseline, current) {
+  for (const key of ["ContractDecodeError", "ContractDecodeResult"]) {
+    if (baseline[key] !== current[key]) {
+      failures.push(`${path}:${key}: decoder export changed`);
+    }
+  }
+  compareStringList(path, "functions", baseline.functions, current.functions);
+  compareStringList(
+    path,
+    "decoderSchemas",
+    baseline.decoderSchemas,
+    current.decoderSchemas,
+  );
+}
+
+function compareStringList(path, key, baselineValues = [], currentValues = []) {
+  const baselineJson = JSON.stringify([...baselineValues].sort());
+  const currentJson = JSON.stringify([...currentValues].sort());
+  if (baselineJson !== currentJson) {
+    failures.push(`${path}:${key}: decoder public surface changed`);
   }
 }
 

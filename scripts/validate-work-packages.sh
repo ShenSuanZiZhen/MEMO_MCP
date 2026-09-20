@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 manifest="$repo_root/work-packages/manifest.json"
+expected_package_count=71
 failures=0
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -11,8 +12,8 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! jq -e '.version and .packages and (.packages | length == 70)' "$manifest" >/dev/null; then
-  printf 'FAIL  manifest must contain exactly 70 packages\n'
+if ! jq -e --argjson expected "$expected_package_count" '.version and .packages and (.packages | length == $expected)' "$manifest" >/dev/null; then
+  printf 'FAIL  manifest must contain exactly %s packages\n' "$expected_package_count"
   exit 1
 fi
 
@@ -74,4 +75,4 @@ if (( failures > 0 )); then
   exit 1
 fi
 
-printf 'PASS  70 work packages and dependency references are structurally valid\n'
+printf 'PASS  %s work packages and dependency references are structurally valid\n' "$expected_package_count"

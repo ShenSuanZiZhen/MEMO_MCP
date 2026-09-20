@@ -10,7 +10,7 @@
     "build": "tsc --build tsconfig.json",
     "generate:types": "node ../../scripts/contracts-generate-types.mjs --write && node scripts/generate-registry-types.mjs --write",
     "lint:schemas": "node ../../scripts/contracts-lint-schemas.mjs && pnpm validate:registry && node scripts/generate-registry-types.mjs",
-    "test:contract": "pnpm lint:schemas && pnpm validate:examples && node ../../scripts/contracts-generate-types.mjs && pnpm breaking:check",
+    "test:contract": "node ../../scripts/contract-check.mjs",
     "validate:examples": "node ../../scripts/contracts-validate-examples.mjs",
     "validate:registry": "node scripts/validate-registry.mjs"
   }

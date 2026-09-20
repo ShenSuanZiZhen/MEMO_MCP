@@ -1,4 +1,8 @@
 import { spawnSync } from "node:child_process";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
 const steps = [
   [
@@ -11,6 +15,16 @@ const steps = [
   ],
   ["generated types check", ["node", "scripts/contracts-generate-types.mjs"]],
   [
+    "runtime decoder tests",
+    [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "tests/contracts/control-plane-decoders.test.ts",
+    ],
+  ],
+  [
     "breaking-change check",
     ["pnpm", "--filter", "@modular-mcp/contracts", "breaking:check"],
   ],
@@ -19,6 +33,7 @@ const steps = [
 for (const [name, command] of steps) {
   console.log(`\n==> contract ${name}`);
   const result = spawnSync(command[0], command.slice(1), {
+    cwd: repoRoot,
     stdio: "inherit",
     shell: false,
   });

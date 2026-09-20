@@ -1,6 +1,6 @@
 ---
 id: WP-03B
-depends_on: [WP-03A]
+depends_on: [WP-03A, WP-02E]
 gate: security
 ---
 # WP-03B Workspace/Project RBAC
@@ -27,7 +27,7 @@ gate: security
 ## 可验证完成结果
 - 完整角色×操作矩阵测试；收紧角色后下一请求拒绝；
 - 两 Workspace 同名资源无法区分存在性；未标注 endpoint 启动或测试失败；
-- `pnpm verify` PASS；安全评审通过。
+- `pnpm verify` 成功；安全评审通过。
 
 ## 衔接输出
 Evidence 提供 capability 常量、授权 middleware 和成员变更语义。

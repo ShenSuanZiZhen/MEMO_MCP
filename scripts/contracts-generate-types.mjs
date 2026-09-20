@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import prettier from "prettier";
 import {
+  generatedControlPlaneDecodersPath,
   generatedControlPlaneTypesPath,
   generatedReleaseOpsTypesPath,
   generatedTypesPath,
@@ -12,6 +13,7 @@ import {
   resolveRef,
   root,
 } from "./contracts-lib.mjs";
+import { renderControlPlaneDecoders } from "./contracts-runtime-decoders-lib.mjs";
 
 const write = process.argv.includes("--write");
 let currentSchemas = {};
@@ -57,6 +59,30 @@ for (const document of documents) {
     }
     console.log(`generated types check passed: ${document.path}`);
   }
+}
+
+const decoderOutput = await prettier.format(
+  renderControlPlaneDecoders({
+    commonSchemas: getSchemas(await readCommonOpenApi()),
+    controlPlaneSchemas: getSchemas(await readControlPlaneOpenApi()),
+  }),
+  { parser: "typescript" },
+);
+const decoderOutputPath = join(root, generatedControlPlaneDecodersPath);
+if (write) {
+  await writeFile(decoderOutputPath, decoderOutput);
+  console.log(`generated ${generatedControlPlaneDecodersPath}`);
+} else {
+  const existing = await readFile(decoderOutputPath, "utf8");
+  if (existing !== decoderOutput) {
+    console.error(
+      `generated decoders are out of date: run pnpm --filter @modular-mcp/contracts generate:types`,
+    );
+    process.exit(1);
+  }
+  console.log(
+    `generated decoders check passed: ${generatedControlPlaneDecodersPath}`,
+  );
 }
 
 function renderTypes(allSchemas, importsCommon, sourcePath) {

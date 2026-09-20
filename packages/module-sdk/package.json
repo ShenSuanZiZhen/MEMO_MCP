@@ -6,6 +6,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build tsconfig.json"
+    "build": "tsc --build tsconfig.json",
+    "test": "vitest run --dir ../.. tests/module-sdk"
+  },
+  "dependencies": {
+    "@modular-mcp/contracts": "workspace:*"
   }
 }

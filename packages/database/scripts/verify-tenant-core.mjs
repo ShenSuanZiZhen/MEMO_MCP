@@ -54,12 +54,15 @@ const uuidV7ForTest =
 const tenantTables = [
   "workspaces",
   "workspace_members",
+  "member_role_audit_events",
   "projects",
   "project_members",
   "data_sources",
   "data_versions",
   "drafts",
   "draft_revisions",
+  "multipart_uploads",
+  "multipart_upload_parts",
   "services",
   "service_definitions",
   "definition_modules",
@@ -101,7 +104,9 @@ assertCrossTenantIsolation();
 assertTenantForeignKeys();
 assertRevisionRules();
 assertDataVersionRules();
+assertMultipartUploadRules();
 assertReleaseOpsRulesV2();
+await assertMemberRoleRepositoryRules();
 await assertRepositoryOutboxRules();
 assertUtcTimestamps();
 assertUuidV7Rules();
@@ -1370,6 +1375,172 @@ function assertDataVersionRules() {
   }
 }
 
+function assertMultipartUploadRules() {
+  const upload = "018f0000-0000-7000-8000-000000000601";
+  const dataVersion = "018f0000-0000-7000-8000-000000000701";
+  scopedCommand({
+    workspaceId: workspaceA,
+    actorId: actorA,
+    sql: `
+      INSERT INTO app.data_versions (
+        id,
+        workspace_id,
+        project_id,
+        environment,
+        data_source_id,
+        status,
+        processing_stage,
+        revision,
+        created_by
+      )
+      VALUES (
+        '${dataVersion}',
+        '${workspaceA}',
+        '${projectA}',
+        'production',
+        '${dataSourceA}',
+        'uploading',
+        'upload',
+        1,
+        '${actorA}'
+      );
+
+      INSERT INTO app.multipart_uploads (
+        id,
+        workspace_id,
+        project_id,
+        environment,
+        draft_id,
+        data_source_id,
+        data_version_id,
+        status,
+        object_key,
+        storage_upload_id,
+        declared_file_name,
+        declared_content_type,
+        declared_size_bytes,
+        expires_at,
+        revision,
+        created_by
+      )
+      VALUES (
+        '${upload}',
+        '${workspaceA}',
+        '${projectA}',
+        'production',
+        '${draftA}',
+        '${dataSourceA}',
+        '${dataVersion}',
+        'uploading',
+        'workspace/ws_018f0000-0000-7000-8000-000000000001/project/prj_018f0000-0000-7000-8000-000000000201/environment/production/draft/drf_018f0000-0000-7000-8000-000000000501/upload/upl_018f0000-0000-7000-8000-000000000601/source.bin',
+        'minio-upload-id',
+        'guide.pdf',
+        'application/pdf',
+        12,
+        '2026-09-21T00:00:00Z',
+        1,
+        '${actorA}'
+      );
+
+      INSERT INTO app.multipart_upload_parts (
+        workspace_id,
+        project_id,
+        environment,
+        upload_id,
+        part_number,
+        size_bytes,
+        checksum_sha256,
+        etag,
+        confirmed_at
+      )
+      VALUES (
+        '${workspaceA}',
+        '${projectA}',
+        'production',
+        '${upload}',
+        1,
+        12,
+        'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        'etag-1',
+        '2026-09-20T00:01:00Z'
+      );
+
+      UPDATE app.multipart_uploads
+      SET
+        status = 'uploaded',
+        server_size_bytes = 12,
+        server_checksum_sha256 = 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        completed_at = '2026-09-20T00:02:00Z',
+        revision = revision + 1
+      WHERE id = '${upload}';
+
+      UPDATE app.data_versions
+      SET
+        status = 'uploaded',
+        content_digest = 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        revision = revision + 1
+      WHERE id = '${dataVersion}';
+    `,
+  });
+
+  assertEquals(
+    "multipart upload visible in tenant scope",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT status || ':' || server_size_bytes::text
+        FROM app.multipart_uploads
+        WHERE id = '${upload}';
+      `,
+    }),
+    "uploaded:12",
+  );
+  assertEquals(
+    "multipart upload hidden across workspace",
+    scopedScalar({
+      workspaceId: workspaceB,
+      actorId: actorB,
+      sql: `
+        SELECT COUNT(*)
+        FROM app.multipart_uploads
+        WHERE id = '${upload}';
+      `,
+    }),
+    "0",
+  );
+  expectFailure(
+    "multipart upload object key is immutable",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.multipart_uploads
+        SET object_key = object_key || '.tampered', revision = revision + 1
+        WHERE id = '${upload}';
+      `,
+      allowFailure: true,
+    }),
+    "multipart upload identity and declaration fields are immutable",
+  );
+  expectFailure(
+    "multipart upload parts are append-only",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.multipart_upload_parts
+        SET checksum_sha256 = 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+        WHERE upload_id = '${upload}' AND part_number = 1;
+      `,
+      allowFailure: true,
+    }),
+    "multipart upload parts are append-only",
+  );
+
+  console.log("PASS multipart upload rules");
+}
+
 function assertReleaseOpsRulesV2() {
   assertReleaseOpsEnumConformance();
 
@@ -2020,6 +2191,957 @@ function assertReleaseOpsRulesV2() {
       `,
     ),
     "0",
+  );
+}
+
+async function assertMemberRoleRepositoryRules() {
+  const workspaceOwnerB = "018f0000-0000-7000-8000-000000000107";
+  const workspaceOwnerC = "018f0000-0000-7000-8000-000000000108";
+  const workspaceAdmin = "018f0000-0000-7000-8000-000000000109";
+  const projectOwnerB = "018f0000-0000-7000-8000-000000000110";
+  const workspaceEditorD = "018f0000-0000-7000-8000-000000000111";
+  const inactiveOwner = "018f0000-0000-7000-8000-000000000112";
+  const workspaceObserverProjectOwner = "018f0000-0000-7000-8000-000000000113";
+  const workspacePublisher = "018f0000-0000-7000-8000-000000000104";
+  const workspaceReviewer = "018f0000-0000-7000-8000-000000000105";
+  const workspaceOperator = "018f0000-0000-7000-8000-000000000106";
+  const concurrentWorkspace = "018f0000-0000-7000-8000-000000009701";
+  const concurrentOwnerA = "018f0000-0000-7000-8000-000000009702";
+  const concurrentOwnerB = "018f0000-0000-7000-8000-000000009703";
+  const revisionProbeWorkspaceActor = "018f0000-0000-7000-8000-000000000114";
+  const revisionProbeProjectActor = "018f0000-0000-7000-8000-000000000115";
+  const projectIdentityActor = "018f0000-0000-7000-8000-000000000116";
+  const projectIdentityActorReplacement =
+    "018f0000-0000-7000-8000-000000000117";
+  const projectIdentityTargetProject = "018f0000-0000-7000-8000-000000000211";
+
+  scopedCommand({
+    workspaceId: workspaceA,
+    actorId: actorA,
+    sql: `
+      INSERT INTO app.workspace_members (workspace_id, actor_id, role, status)
+      VALUES
+        ('${workspaceA}', '${workspaceOwnerB}', 'owner', 'active'),
+        ('${workspaceA}', '${workspaceOwnerC}', 'owner', 'active'),
+        ('${workspaceA}', '${workspaceAdmin}', 'admin', 'active'),
+        ('${workspaceA}', '${projectOwnerB}', 'owner', 'active'),
+        ('${workspaceA}', '${workspaceEditorD}', 'editor', 'active'),
+        ('${workspaceA}', '${inactiveOwner}', 'owner', 'removed'),
+        ('${workspaceA}', '${workspaceObserverProjectOwner}', 'observer', 'active'),
+        ('${workspaceA}', '${projectIdentityActor}', 'editor', 'active'),
+        ('${workspaceA}', '${projectIdentityActorReplacement}', 'editor', 'active');
+
+      INSERT INTO app.project_members (workspace_id, project_id, actor_id, role, status)
+      VALUES
+        ('${workspaceA}', '${projectA}', '${workspaceOwnerB}', 'owner', 'active'),
+        ('${workspaceA}', '${projectA}', '${projectOwnerB}', 'owner', 'active'),
+        ('${workspaceA}', '${projectA}', '${workspaceAdmin}', 'observer', 'active'),
+        ('${workspaceA}', '${projectA}', '${workspaceObserverProjectOwner}', 'owner', 'active'),
+        ('${workspaceA}', '${projectA}', '${workspaceEditorD}', 'editor', 'active'),
+        ('${workspaceA}', '${projectA}', '${projectIdentityActor}', 'editor', 'active');
+    `,
+  });
+  adminCommand(`
+    INSERT INTO app.projects (
+      id,
+      workspace_id,
+      slug,
+      display_name,
+      description,
+      default_region,
+      default_environment,
+      created_by
+    )
+    VALUES (
+      '${projectIdentityTargetProject}',
+      '${workspaceA}',
+      'wp02e-identity-target',
+      'WP-02E Identity Target',
+      'Synthetic identity immutability target',
+      'us-east-1',
+      'production',
+      '${actorA}'
+    );
+  `);
+  adminCommand(`
+    INSERT INTO app.workspaces (id, slug, kind, display_name, region)
+    VALUES (
+      '${concurrentWorkspace}',
+      'role-race',
+      'team',
+      'Role Race',
+      'us-east-1'
+    );
+
+    INSERT INTO app.workspace_members (workspace_id, actor_id, role, status)
+    VALUES
+      ('${concurrentWorkspace}', '${concurrentOwnerA}', 'owner', 'active'),
+      ('${concurrentWorkspace}', '${concurrentOwnerB}', 'owner', 'active');
+  `);
+
+  assertEquals(
+    "existing workspace members receive revision 1",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT bool_and(revision = 1)::text
+        FROM app.workspace_members
+        WHERE workspace_id = '${workspaceA}';
+      `,
+    }),
+    "true",
+  );
+  assertEquals(
+    "existing project members receive revision 1",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT bool_and(revision = 1)::text
+        FROM app.project_members
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}';
+      `,
+    }),
+    "true",
+  );
+  scopedCommand({
+    workspaceId: workspaceA,
+    actorId: actorA,
+    sql: `
+      INSERT INTO app.workspace_members (workspace_id, actor_id, role, status, revision)
+      VALUES ('${workspaceA}', '${revisionProbeWorkspaceActor}', 'observer', 'active', 1);
+
+      INSERT INTO app.workspace_members (workspace_id, actor_id, role, status, revision)
+      VALUES ('${workspaceA}', '${revisionProbeProjectActor}', 'observer', 'active', 1);
+
+      INSERT INTO app.project_members (workspace_id, project_id, actor_id, role, status, revision)
+      VALUES ('${workspaceA}', '${projectA}', '${revisionProbeProjectActor}', 'observer', 'active', 1);
+    `,
+  });
+  console.log(
+    "PASS workspace and project member explicit revision 1 inserts succeed",
+  );
+
+  for (const revision of [0, 2, 99]) {
+    expectFailure(
+      `workspace member initial revision ${revision} is rejected`,
+      scopedCommand({
+        workspaceId: workspaceA,
+        actorId: actorA,
+        sql: `
+          INSERT INTO app.workspace_members (workspace_id, actor_id, role, status, revision)
+          VALUES ('${workspaceA}', '${nextUuid()}', 'observer', 'active', ${revision});
+        `,
+        allowFailure: true,
+      }),
+      "member initial revision must be 1",
+    );
+
+    const actorForProjectRevision = nextUuid();
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        INSERT INTO app.workspace_members (workspace_id, actor_id, role, status)
+        VALUES ('${workspaceA}', '${actorForProjectRevision}', 'observer', 'active');
+      `,
+    });
+    expectFailure(
+      `project member initial revision ${revision} is rejected`,
+      scopedCommand({
+        workspaceId: workspaceA,
+        actorId: actorA,
+        sql: `
+          INSERT INTO app.project_members (workspace_id, project_id, actor_id, role, status, revision)
+          VALUES ('${workspaceA}', '${projectA}', '${actorForProjectRevision}', 'observer', 'active', ${revision});
+        `,
+        allowFailure: true,
+      }),
+      "member initial revision must be 1",
+    );
+  }
+
+  const projectIdentityBefore =
+    projectMemberIdentitySnapshot(projectIdentityActor);
+  expectFailure(
+    "project member project_id update without revision increment is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.project_members
+        SET project_id = '${projectIdentityTargetProject}'
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}'
+          AND actor_id = '${projectIdentityActor}';
+      `,
+      allowFailure: true,
+    }),
+    "member identity fields are immutable",
+  );
+  expectFailure(
+    "project member project_id update with revision increment is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.project_members
+        SET project_id = '${projectIdentityTargetProject}',
+          revision = revision + 1
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}'
+          AND actor_id = '${projectIdentityActor}';
+      `,
+      allowFailure: true,
+    }),
+    "member identity fields are immutable",
+  );
+  assertEquals(
+    "failed project_id updates leave project member unchanged",
+    projectMemberIdentitySnapshot(projectIdentityActor),
+    projectIdentityBefore,
+  );
+  expectFailure(
+    "project member actor_id identity update is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.project_members
+        SET actor_id = '${projectIdentityActorReplacement}',
+          revision = revision + 1
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}'
+          AND actor_id = '${projectIdentityActor}';
+      `,
+      allowFailure: true,
+    }),
+    "member identity fields are immutable",
+  );
+  expectFailure(
+    "project member workspace_id identity update is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.project_members
+        SET workspace_id = '${workspaceB}',
+          revision = revision + 1
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}'
+          AND actor_id = '${projectIdentityActor}';
+      `,
+      allowFailure: true,
+    }),
+    "member identity fields are immutable",
+  );
+  expectFailure(
+    "project member created_at identity update is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.project_members
+        SET created_at = created_at + interval '1 second',
+          revision = revision + 1
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}'
+          AND actor_id = '${projectIdentityActor}';
+      `,
+      allowFailure: true,
+    }),
+    "member identity fields are immutable",
+  );
+  scopedCommand({
+    workspaceId: workspaceA,
+    actorId: actorA,
+    sql: `
+      UPDATE app.project_members
+      SET status = 'removed',
+        revision = revision + 1
+      WHERE workspace_id = '${workspaceA}'
+        AND project_id = '${projectA}'
+        AND actor_id = '${projectIdentityActor}';
+    `,
+  });
+  console.log("PASS project member status update with revision +1 succeeds");
+
+  assertEquals(
+    "workspace role change returns database revision",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT
+          kind
+          || '|'
+          || previous_role::text
+          || '|'
+          || next_role::text
+          || '|'
+          || revision::text
+        FROM app.change_member_role_and_record_audit(
+          'workspace',
+          '${workspaceA}',
+          NULL,
+          '${actorA}',
+          '${actorC}',
+          'observer',
+          true,
+          '2026-09-18T00:00:00.000Z',
+          '${nextUuid()}'
+        );
+      `,
+    }),
+    "changed|editor|observer|2",
+  );
+  assertEquals(
+    "workspace role change creates audit with null project scope",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT count(*)
+        FROM app.member_role_audit_events
+        WHERE target_actor_id = '${actorC}'
+          AND scope = 'workspace'
+          AND project_id IS NULL
+          AND membership_revision = 2;
+      `,
+    }),
+    "1",
+  );
+
+  assertEquals(
+    "project role change returns database revision",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT
+          kind
+          || '|'
+          || previous_role::text
+          || '|'
+          || next_role::text
+          || '|'
+          || revision::text
+        FROM app.change_member_role_and_record_audit(
+          'project',
+          '${workspaceA}',
+          '${projectA}',
+          '${actorA}',
+          '${actorC}',
+          'reviewer',
+          true,
+          '2026-09-18T00:01:00.000Z',
+          '${nextUuid()}'
+        );
+      `,
+    }),
+    "changed|editor|reviewer|2",
+  );
+  assertEquals(
+    "project role change creates project-scoped audit",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT count(*)
+        FROM app.member_role_audit_events
+        WHERE target_actor_id = '${actorC}'
+          AND scope = 'project'
+          AND project_id = '${projectA}'
+          AND membership_revision = 2;
+      `,
+    }),
+    "1",
+  );
+
+  expectFailure(
+    "direct workspace role update without audit is rejected before commit",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.workspace_members
+        SET role = 'editor',
+          revision = revision + 1
+        WHERE workspace_id = '${workspaceA}'
+          AND actor_id = '${actorC}';
+      `,
+      allowFailure: true,
+    }),
+    "workspace member role change requires exactly one matching audit event",
+  );
+  expectFailure(
+    "role audit with wrong previous role is rejected",
+    adminMemberRoleAuditProbe({
+      targetActorId: workspaceEditorD,
+      updateTable: "workspace",
+      updatedRole: "observer",
+      previousRole: "owner",
+      nextRole: "observer",
+      membershipRevision: 2,
+    }),
+    "workspace member role change requires exactly one matching audit event",
+  );
+  expectFailure(
+    "role audit with wrong next role is rejected",
+    adminMemberRoleAuditProbe({
+      targetActorId: workspaceEditorD,
+      updateTable: "workspace",
+      updatedRole: "observer",
+      previousRole: "editor",
+      nextRole: "publisher",
+      membershipRevision: 2,
+    }),
+    "workspace member role change requires exactly one matching audit event",
+  );
+  expectFailure(
+    "role audit with wrong membership revision is rejected",
+    adminMemberRoleAuditProbe({
+      targetActorId: workspaceEditorD,
+      updateTable: "workspace",
+      updatedRole: "observer",
+      previousRole: "editor",
+      nextRole: "observer",
+      membershipRevision: 99,
+    }),
+    "workspace member role change requires exactly one matching audit event",
+  );
+  expectFailure(
+    "workspace role audit carrying project_id is rejected",
+    adminCommand(
+      memberRoleAuditInsertSql({
+        scope: "workspace",
+        projectId: projectA,
+        targetActorId: workspaceEditorD,
+        previousRole: "editor",
+        nextRole: "observer",
+        membershipRevision: 1,
+        controlledWriter: true,
+      }),
+      true,
+    ),
+    "member_role_audit_scope_shape",
+  );
+  expectFailure(
+    "project role audit missing project_id is rejected",
+    adminCommand(
+      memberRoleAuditInsertSql({
+        scope: "project",
+        projectId: null,
+        targetActorId: workspaceEditorD,
+        previousRole: "editor",
+        nextRole: "observer",
+        membershipRevision: 1,
+        controlledWriter: true,
+      }),
+      true,
+    ),
+    "member_role_audit_scope_shape",
+  );
+  expectFailure(
+    "duplicate role audit for one membership revision is rejected",
+    adminMemberRoleAuditProbe({
+      targetActorId: workspaceEditorD,
+      updateTable: "workspace",
+      updatedRole: "observer",
+      previousRole: "editor",
+      nextRole: "observer",
+      membershipRevision: 2,
+      duplicateAudit: true,
+    }),
+    "duplicate key value violates unique constraint",
+  );
+  expectFailure(
+    "standalone role audit without role change is rejected",
+    adminCommand(
+      memberRoleAuditInsertSql({
+        scope: "workspace",
+        projectId: null,
+        targetActorId: workspaceEditorD,
+        previousRole: "owner",
+        nextRole: "editor",
+        membershipRevision: 1,
+        controlledWriter: true,
+      }),
+      true,
+    ),
+    "member role audit does not correspond to a role change in this transaction",
+  );
+
+  const concurrentAuditA = nextUuid();
+  const concurrentAuditB = nextUuid();
+  const concurrentResults = await Promise.all([
+    runScopedPsql(
+      roleChangeSql({
+        scope: "workspace",
+        workspaceId: concurrentWorkspace,
+        actorId: concurrentOwnerA,
+        targetActorId: concurrentOwnerA,
+        nextRole: "admin",
+        manageExistingOwner: true,
+        auditId: concurrentAuditA,
+      }),
+      { workspaceId: concurrentWorkspace, actorId: concurrentOwnerA },
+    ),
+    runScopedPsql(
+      roleChangeSql({
+        scope: "workspace",
+        workspaceId: concurrentWorkspace,
+        actorId: concurrentOwnerA,
+        targetActorId: concurrentOwnerB,
+        nextRole: "admin",
+        manageExistingOwner: true,
+        auditId: concurrentAuditB,
+      }),
+      { workspaceId: concurrentWorkspace, actorId: concurrentOwnerA },
+    ),
+  ]);
+  const changedCount = concurrentResults.filter((output) =>
+    output.includes("changed"),
+  ).length;
+  assertEquals(
+    "two concurrent owner demotions allow at most one success",
+    `${changedCount}`,
+    "1",
+  );
+  assertEquals(
+    "two concurrent owner demotions retain at least one owner",
+    scopedScalar({
+      workspaceId: concurrentWorkspace,
+      actorId: concurrentOwnerA,
+      sql: `
+        SELECT (count(*) >= 1)::text
+        FROM app.workspace_members
+        WHERE workspace_id = '${concurrentWorkspace}'
+          AND role = 'owner'
+          AND status = 'active';
+      `,
+    }),
+    "true",
+  );
+
+  const adminAttempts = await Promise.all([
+    runScopedPsql(
+      roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: workspaceAdmin,
+        targetActorId: actorA,
+        nextRole: "observer",
+        manageExistingOwner: false,
+        auditId: nextUuid(),
+      }),
+      { workspaceId: workspaceA, actorId: workspaceAdmin },
+    ),
+    runScopedPsql(
+      roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: workspaceAdmin,
+        targetActorId: actorA,
+        nextRole: "admin",
+        manageExistingOwner: false,
+        auditId: nextUuid(),
+      }),
+      { workspaceId: workspaceA, actorId: workspaceAdmin },
+    ),
+  ]);
+  assertEquals(
+    "admin concurrent attempts to modify owner are all rejected",
+    `${adminAttempts.every((output) => output.includes("not_found_or_forbidden"))}`,
+    "true",
+  );
+  assertEquals(
+    "admin concurrent attempts do not audit owner changes",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT count(*)
+        FROM app.member_role_audit_events
+        WHERE actor_id = '${workspaceAdmin}'
+          AND target_actor_id = '${actorA}';
+      `,
+    }),
+    "0",
+  );
+
+  for (const [label, caller] of [
+    ["observer", actorC],
+    ["editor", workspaceEditorD],
+    ["publisher", workspacePublisher],
+    ["reviewer", workspaceReviewer],
+    ["operator", workspaceOperator],
+  ]) {
+    assertEquals(
+      `${label} cannot manage existing owner even with snapshot true`,
+      scopedScalar({
+        workspaceId: workspaceA,
+        actorId: caller,
+        sql: roleChangeSql({
+          scope: "workspace",
+          workspaceId: workspaceA,
+          actorId: caller,
+          targetActorId: actorA,
+          nextRole: "observer",
+          manageExistingOwner: true,
+          auditId: nextUuid(),
+        }),
+      }),
+      "not_found_or_forbidden|||",
+    );
+  }
+  assertEquals(
+    "admin cannot manage existing owner with snapshot true",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: workspaceAdmin,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: workspaceAdmin,
+        targetActorId: actorA,
+        nextRole: "observer",
+        manageExistingOwner: true,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+  assertEquals(
+    "NULL manageExistingOwner cannot manage owner",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: actorA,
+        targetActorId: workspaceOwnerC,
+        nextRole: "admin",
+        manageExistingOwner: null,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+  assertEquals(
+    "inactive caller cannot change member role",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: inactiveOwner,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: inactiveOwner,
+        targetActorId: workspaceEditorD,
+        nextRole: "observer",
+        manageExistingOwner: false,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+  assertEquals(
+    "workspace admin with project observer cannot manage project role",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: workspaceAdmin,
+      sql: roleChangeSql({
+        scope: "project",
+        workspaceId: workspaceA,
+        projectId: projectA,
+        actorId: workspaceAdmin,
+        targetActorId: actorC,
+        nextRole: "editor",
+        manageExistingOwner: false,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+  assertEquals(
+    "workspace observer with project owner cannot manage project role",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: workspaceObserverProjectOwner,
+      sql: roleChangeSql({
+        scope: "project",
+        workspaceId: workspaceA,
+        projectId: projectA,
+        actorId: workspaceObserverProjectOwner,
+        targetActorId: actorC,
+        nextRole: "editor",
+        manageExistingOwner: false,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+  assertEquals(
+    "valid owner can manage a non-last owner",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: actorA,
+        targetActorId: workspaceOwnerB,
+        nextRole: "admin",
+        manageExistingOwner: true,
+        auditId: nextUuid(),
+      }),
+    }),
+    "changed|owner|admin|2",
+  );
+
+  const beforeAuditFailure = memberSnapshot("workspace_members", actorC);
+  adminCommand(`
+    CREATE FUNCTION app.wp02e_fail_member_role_audit()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      RAISE EXCEPTION 'wp02e synthetic audit insert failure';
+    END;
+    $$;
+
+    CREATE TRIGGER wp02e_fail_member_role_audit
+    BEFORE INSERT ON app.member_role_audit_events
+    FOR EACH ROW EXECUTE FUNCTION app.wp02e_fail_member_role_audit();
+  `);
+  expectFailure(
+    "member role audit failure rolls back role and revision",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: actorA,
+        targetActorId: actorC,
+        nextRole: "editor",
+        manageExistingOwner: true,
+        auditId: nextUuid(),
+      }),
+      allowFailure: true,
+    }),
+    "wp02e synthetic audit insert failure",
+  );
+  adminCommand(`
+    DROP TRIGGER wp02e_fail_member_role_audit ON app.member_role_audit_events;
+    DROP FUNCTION app.wp02e_fail_member_role_audit();
+  `);
+  assertEquals(
+    "member role audit failure leaves role and revision unchanged",
+    memberSnapshot("workspace_members", actorC),
+    beforeAuditFailure,
+  );
+
+  adminCommand(`
+    CREATE FUNCTION app.wp02e_fail_workspace_member_update()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      IF NEW.actor_id = '${actorC}'::uuid THEN
+        RAISE EXCEPTION 'wp02e synthetic role update failure';
+      END IF;
+      RETURN NEW;
+    END;
+    $$;
+
+    CREATE TRIGGER wp02e_fail_workspace_member_update
+    BEFORE UPDATE ON app.workspace_members
+    FOR EACH ROW EXECUTE FUNCTION app.wp02e_fail_workspace_member_update();
+  `);
+  expectFailure(
+    "member role update failure creates no audit",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceA,
+        actorId: actorA,
+        targetActorId: actorC,
+        nextRole: "editor",
+        manageExistingOwner: true,
+        auditId: nextUuid(),
+      }),
+      allowFailure: true,
+    }),
+    "wp02e synthetic role update failure",
+  );
+  adminCommand(`
+    DROP TRIGGER wp02e_fail_workspace_member_update ON app.workspace_members;
+    DROP FUNCTION app.wp02e_fail_workspace_member_update();
+  `);
+  assertEquals(
+    "member role update failure leaves no partial audit",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        SELECT count(*)
+        FROM app.member_role_audit_events
+        WHERE target_actor_id = '${actorC}'
+          AND next_role = 'editor';
+      `,
+    }),
+    "0",
+  );
+
+  assertEquals(
+    "cross-workspace guessed member role change is indistinguishable",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: roleChangeSql({
+        scope: "workspace",
+        workspaceId: workspaceB,
+        actorId: actorA,
+        targetActorId: actorB,
+        nextRole: "observer",
+        manageExistingOwner: true,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+  assertEquals(
+    "cross-project guessed member role change is indistinguishable",
+    scopedScalar({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: roleChangeSql({
+        scope: "project",
+        workspaceId: workspaceA,
+        projectId: projectB,
+        actorId: actorA,
+        targetActorId: actorB,
+        nextRole: "observer",
+        manageExistingOwner: true,
+        auditId: nextUuid(),
+      }),
+    }),
+    "not_found_or_forbidden|||",
+  );
+
+  expectFailure(
+    "workspace member revision jump is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.workspace_members
+        SET role = 'editor',
+          revision = revision + 2
+        WHERE workspace_id = '${workspaceA}'
+          AND actor_id = '${actorC}';
+      `,
+      allowFailure: true,
+    }),
+    "member revision must increment by exactly 1",
+  );
+  expectFailure(
+    "workspace member revision rollback is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.workspace_members
+        SET status = 'removed',
+          revision = revision - 1
+        WHERE workspace_id = '${workspaceA}'
+          AND actor_id = '${actorC}';
+      `,
+      allowFailure: true,
+    }),
+    "member revision must increment by exactly 1",
+  );
+  expectFailure(
+    "project member revision unchanged role update is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.project_members
+        SET role = 'publisher'
+        WHERE workspace_id = '${workspaceA}'
+          AND project_id = '${projectA}'
+          AND actor_id = '${actorC}';
+      `,
+      allowFailure: true,
+    }),
+    "member revision must increment by exactly 1",
+  );
+  expectFailure(
+    "runtime role direct audit insert is rejected",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        INSERT INTO app.member_role_audit_events (
+          id,
+          workspace_id,
+          project_id,
+          scope,
+          actor_id,
+          target_actor_id,
+          previous_role,
+          next_role,
+          membership_revision
+        )
+        VALUES (
+          '${nextUuid()}',
+          '${workspaceA}',
+          NULL,
+          'workspace',
+          '${actorA}',
+          '${actorC}',
+          'observer',
+          'editor',
+          3
+        );
+      `,
+      allowFailure: true,
+    }),
+    "permission denied",
+  );
+  expectFailure(
+    "member role audit update is rejected for runtime role",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        UPDATE app.member_role_audit_events
+        SET next_role = previous_role
+        WHERE target_actor_id = '${actorC}';
+      `,
+      allowFailure: true,
+    }),
+    "permission denied",
+  );
+  expectFailure(
+    "member role audit delete is rejected for runtime role",
+    scopedCommand({
+      workspaceId: workspaceA,
+      actorId: actorA,
+      sql: `
+        DELETE FROM app.member_role_audit_events
+        WHERE target_actor_id = '${actorC}';
+      `,
+      allowFailure: true,
+    }),
+    "permission denied",
   );
 }
 
@@ -3269,7 +4391,188 @@ function idempotentAuditAndOutboxSql({
   `;
 }
 
-function runScopedPsql(sql) {
+function roleChangeSql({
+  scope,
+  workspaceId,
+  projectId,
+  actorId,
+  targetActorId,
+  nextRole,
+  manageExistingOwner,
+  auditId,
+}) {
+  const projectValue = projectId ? `'${projectId}'` : "NULL";
+  const manageExistingOwnerValue =
+    manageExistingOwner === null
+      ? "NULL"
+      : manageExistingOwner
+        ? "true"
+        : "false";
+  return `
+    SELECT
+      kind
+      || '|'
+      || coalesce(previous_role::text, '')
+      || '|'
+      || coalesce(next_role::text, '')
+      || '|'
+      || coalesce(revision::text, '')
+    FROM app.change_member_role_and_record_audit(
+      '${scope}',
+      '${workspaceId}',
+      ${projectValue},
+      '${actorId}',
+      '${targetActorId}',
+      '${nextRole}',
+      ${manageExistingOwnerValue},
+      '2026-09-18T00:02:00.000Z',
+      '${auditId}'
+    );
+  `;
+}
+
+function adminMemberRoleAuditProbe({
+  targetActorId,
+  updateTable,
+  updatedRole,
+  previousRole,
+  nextRole,
+  membershipRevision,
+  duplicateAudit = false,
+}) {
+  const projectColumn =
+    updateTable === "project" ? `AND project_id = '${projectA}'` : "";
+  const updateTarget =
+    updateTable === "project" ? "app.project_members" : "app.workspace_members";
+  const scope = updateTable;
+  const projectId = updateTable === "project" ? projectA : null;
+  const insert = memberRoleAuditValuesSql({
+    scope,
+    projectId,
+    targetActorId,
+    previousRole,
+    nextRole,
+    membershipRevision,
+  });
+  return adminCommand(
+    `
+      BEGIN;
+      SET LOCAL app.workspace_id = '${workspaceA}';
+      SET LOCAL app.actor_id = '${actorA}';
+      SELECT set_config('app.member_role_audit_writer', 'change_member_role_and_record_audit', true);
+      UPDATE ${updateTarget}
+      SET role = '${updatedRole}',
+        revision = revision + 1
+      WHERE workspace_id = '${workspaceA}'
+        ${projectColumn}
+        AND actor_id = '${targetActorId}';
+      ${insert}
+      ${duplicateAudit ? insert : ""}
+      COMMIT;
+    `,
+    true,
+  );
+}
+
+function memberRoleAuditInsertSql({
+  scope,
+  projectId,
+  targetActorId,
+  previousRole,
+  nextRole,
+  membershipRevision,
+  controlledWriter,
+}) {
+  return `
+    BEGIN;
+    SET LOCAL app.workspace_id = '${workspaceA}';
+    SET LOCAL app.actor_id = '${actorA}';
+    ${
+      controlledWriter
+        ? "SELECT set_config('app.member_role_audit_writer', 'change_member_role_and_record_audit', true);"
+        : ""
+    }
+    ${memberRoleAuditValuesSql({
+      scope,
+      projectId,
+      targetActorId,
+      previousRole,
+      nextRole,
+      membershipRevision,
+    })}
+    COMMIT;
+  `;
+}
+
+function memberRoleAuditValuesSql({
+  scope,
+  projectId,
+  targetActorId,
+  previousRole,
+  nextRole,
+  membershipRevision,
+}) {
+  const projectValue = projectId ? `'${projectId}'` : "NULL";
+  return `
+    INSERT INTO app.member_role_audit_events (
+      id,
+      workspace_id,
+      project_id,
+      scope,
+      actor_id,
+      target_actor_id,
+      previous_role,
+      next_role,
+      membership_revision
+    )
+    VALUES (
+      '${nextUuid()}',
+      '${workspaceA}',
+      ${projectValue},
+      '${scope}',
+      '${actorA}',
+      '${targetActorId}',
+      '${previousRole}',
+      '${nextRole}',
+      ${membershipRevision}
+    );
+  `;
+}
+
+function memberSnapshot(table, actorId) {
+  const projectFilter =
+    table === "project_members" ? `AND project_id = '${projectA}'` : "";
+  return scopedScalar({
+    workspaceId: workspaceA,
+    actorId: actorA,
+    sql: `
+      SELECT role::text || '|' || status::text || '|' || revision::text
+      FROM app.${table}
+      WHERE workspace_id = '${workspaceA}'
+        ${projectFilter}
+        AND actor_id = '${actorId}';
+    `,
+  });
+}
+
+function projectMemberIdentitySnapshot(actorId) {
+  return scopedScalar({
+    workspaceId: workspaceA,
+    actorId: actorA,
+    sql: `
+      SELECT project_id::text || '|' || role::text || '|' || status::text || '|' || revision::text
+      FROM app.project_members
+      WHERE workspace_id = '${workspaceA}'
+        AND project_id = '${projectA}'
+        AND actor_id = '${actorId}';
+    `,
+  });
+}
+
+function runScopedPsql(
+  sql,
+  { workspaceId = workspaceA, actorId = actorA } = {},
+) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       "psql",
@@ -3296,9 +4599,7 @@ function runScopedPsql(sql) {
       }
       reject(new Error(`psql concurrency worker failed: ${stderr}`));
     });
-    child.stdin.end(
-      scopedBlock({ workspaceId: workspaceA, actorId: actorA, sql }),
-    );
+    child.stdin.end(scopedBlock({ workspaceId, actorId, sql }));
   });
 }
 
@@ -5411,7 +6712,7 @@ function assertUuidV7Rules() {
         VALUES (
           '${workspaceA}',
           '018f0000-0000-7000-0000-000000000903',
-          'viewer'
+          'observer'
         );
       `,
       true,

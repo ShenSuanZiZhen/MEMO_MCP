@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import {
   createIdempotencyRepository,
+  createMultipartUploadRepository,
   createOutboxRepository,
+  createPostgresMemberRoleChangeRepository,
   createRepositorySupportAdapters,
   pinnedTransactionConnectionBrand,
   withTenantTransaction,
@@ -28,6 +30,9 @@ await assertReleaseFailureAfterSuccessIsReported();
 await assertTransactionRequiresFullContext();
 await assertIdempotencyRepositoryMapping();
 await assertOutboxRepositoryMapping();
+await assertMultipartUploadRepositoryMapping();
+await assertMemberRoleChangeRepositoryMapping();
+await assertMemberRoleChangeRepositoryPreCommitValidation();
 assertRepositorySupportFactory();
 
 console.log("database public API verification passed");
@@ -378,9 +383,11 @@ async function assertOutboxRepositoryMapping() {
     "audit",
   ]);
   assert.equal(connection.calls[0].params.length, 12);
-  assert(!connection.calls[0].params.includes(
-    "audit:018f0000-0000-7000-8000-000000001951:1:audit.created",
-  ));
+  assert(
+    !connection.calls[0].params.includes(
+      "audit:018f0000-0000-7000-8000-000000001951:1:audit.created",
+    ),
+  );
 
   const claimed = await repository.claim(5, "publisher-a", 30);
   assert.equal(claimed.length, 1);
@@ -422,11 +429,377 @@ async function assertOutboxRepositoryMapping() {
   ]);
 }
 
+async function assertMultipartUploadRepositoryMapping() {
+  const uploadUuid = "018f0000-0000-7000-8000-000000000601";
+  const { connection, transaction } = createTransaction(
+    new Map([
+      [
+        "FROM app.multipart_uploads",
+        [
+          {
+            id: uploadUuid,
+            draft_id: "018f0000-0000-7000-8000-000000000501",
+            data_source_id: "018f0000-0000-7000-8000-000000000301",
+            data_version_id: "018f0000-0000-7000-8000-000000000401",
+            status: "uploading",
+            object_key:
+              "workspace/ws_018f0000-0000-7000-8000-000000000001/project/prj_018f0000-0000-7000-8000-000000000201/environment/production/draft/drf_018f0000-0000-7000-8000-000000000501/upload/upl_018f0000-0000-7000-8000-000000000601/source.bin",
+            storage_upload_id: "minio-upload-id",
+            declared_file_name: "guide.pdf",
+            declared_size_bytes: 12,
+            server_size_bytes: null,
+            server_checksum_sha256: null,
+            expires_at: "2026-09-20T01:00:00.000Z",
+            revision: 1,
+          },
+        ],
+      ],
+      [
+        "FROM app.multipart_upload_parts",
+        [
+          {
+            part_number: 1,
+            size_bytes: 12,
+            checksum_sha256:
+              "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            etag: "etag-1",
+            confirmed_at: "2026-09-20T00:00:00.000Z",
+          },
+        ],
+      ],
+    ]),
+  );
+  const repository = createMultipartUploadRepository(transaction);
+  const result = await repository.getActive({
+    scope: {
+      workspaceId: "ws_018f0000-0000-7000-8000-000000000001",
+      projectId: "prj_018f0000-0000-7000-8000-000000000201",
+      environment: "production",
+    },
+    uploadId: `upl_${uploadUuid}`,
+    now: "2026-09-20T00:30:00.000Z",
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.value.uploadId, `upl_${uploadUuid}`);
+  assert.equal(result.value.parts[0].partNumber, 1);
+  assert.deepEqual(connection.calls[0].params, [
+    scope.workspaceId,
+    scope.projectId,
+    scope.environment,
+    uploadUuid,
+  ]);
+}
+
+async function assertMemberRoleChangeRepositoryMapping() {
+  const workspaceUuid = "018f0000-0000-7000-8000-000000000001";
+  const projectUuid = "018f0000-0000-7000-8000-000000000201";
+  const actorUuid = "018f0000-0000-7000-8000-000000000101";
+  const targetUuid = "018f0000-0000-7000-8000-000000000103";
+  const connection = createMockConnection(
+    new Map([
+      [
+        "app.change_member_role_and_record_audit",
+        [
+          {
+            kind: "changed",
+            previous_role: "editor",
+            next_role: "observer",
+            revision: "2",
+          },
+        ],
+      ],
+    ]),
+  );
+  const repository = createPostgresMemberRoleChangeRepository(
+    createProvider(connection),
+  );
+
+  const result = await repository.changeMemberRoleAndRecordAudit({
+    actorId: `usr_${actorUuid}`,
+    targetActorId: `usr_${targetUuid}`,
+    scope: {
+      kind: "project",
+      workspaceId: `ws_${workspaceUuid}`,
+      projectId: `prj_${projectUuid}`,
+    },
+    nextRole: "observer",
+    authorization: {
+      actorId: `usr_${actorUuid}`,
+      scope: {
+        kind: "project",
+        workspaceId: `ws_${workspaceUuid}`,
+        projectId: `prj_${projectUuid}`,
+      },
+      nextRole: "observer",
+      manageExistingOwner: false,
+    },
+    occurredAt: "2026-09-18T00:00:00.000Z",
+  });
+
+  assert.deepEqual(result, {
+    kind: "changed",
+    previousRole: "editor",
+    nextRole: "observer",
+    revision: 2,
+  });
+  assert.deepEqual(
+    connection.calls.map((call) => call.sql),
+    [
+      "BEGIN",
+      "SELECT set_config($1, $2, true), set_config($3, $4, true)",
+      "SELECT kind, previous_role::text AS previous_role, next_role::text AS next_role, revision FROM app.change_member_role_and_record_audit( $1::app.member_role_change_scope, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::app.member_role, $7::boolean, $8::timestamptz, $9::uuid )",
+      "COMMIT",
+      "RELEASE",
+    ],
+  );
+  assert.deepEqual(connection.calls[1].params, [
+    "app.workspace_id",
+    workspaceUuid,
+    "app.actor_id",
+    actorUuid,
+  ]);
+  assert.deepEqual(connection.calls[2].params.slice(0, 8), [
+    "project",
+    workspaceUuid,
+    projectUuid,
+    actorUuid,
+    targetUuid,
+    "observer",
+    false,
+    "2026-09-18T00:00:00.000Z",
+  ]);
+  assert.equal(typeof connection.calls[2].params[8], "string");
+}
+
+async function assertMemberRoleChangeRepositoryPreCommitValidation() {
+  const invalidCases = [
+    {
+      label: "malformed changed row",
+      rows: [
+        {
+          kind: "changed",
+          previous_role: "synthetic-invalid",
+          next_role: "observer",
+          revision: "2",
+        },
+      ],
+      message: /invalid result/,
+    },
+    {
+      label: "illegal next role",
+      rows: [
+        {
+          kind: "changed",
+          previous_role: "editor",
+          next_role: "synthetic-invalid",
+          revision: "2",
+        },
+      ],
+      message: /invalid result/,
+    },
+    {
+      label: "unsafe revision",
+      rows: [
+        {
+          kind: "changed",
+          previous_role: "editor",
+          next_role: "observer",
+          revision: "9007199254740992",
+        },
+      ],
+      message: /invalid result/,
+    },
+    {
+      label: "multi row result",
+      rows: [
+        {
+          kind: "changed",
+          previous_role: "editor",
+          next_role: "observer",
+          revision: "2",
+        },
+        {
+          kind: "changed",
+          previous_role: "editor",
+          next_role: "observer",
+          revision: "3",
+        },
+      ],
+      message: /invalid row count/,
+    },
+    {
+      label: "empty result",
+      rows: [],
+      message: /invalid row count/,
+    },
+    {
+      label: "denied with data fields",
+      rows: [
+        {
+          kind: "not_found_or_forbidden",
+          previous_role: "editor",
+          next_role: null,
+          revision: null,
+        },
+      ],
+      message: /denied result returned data fields/,
+    },
+    {
+      label: "conflict with data fields",
+      rows: [
+        {
+          kind: "last_owner_conflict",
+          previous_role: null,
+          next_role: "owner",
+          revision: null,
+        },
+      ],
+      message: /conflict result returned data fields/,
+    },
+    {
+      label: "unknown kind",
+      rows: [
+        {
+          kind: "synthetic",
+          previous_role: null,
+          next_role: null,
+          revision: null,
+        },
+      ],
+      message: /unknown result kind/,
+    },
+  ];
+
+  for (const testCase of invalidCases) {
+    const connection = memberRoleConnection(testCase.rows);
+    const repository = createPostgresMemberRoleChangeRepository(
+      createProvider(connection),
+    );
+    await assert.rejects(
+      () => repository.changeMemberRoleAndRecordAudit(memberRoleInput()),
+      testCase.message,
+      testCase.label,
+    );
+    assert(!connection.calls.some((call) => call.sql === "COMMIT"));
+    assert(connection.calls.some((call) => call.sql === "ROLLBACK"));
+  }
+
+  const commitError = new Error("synthetic commit failed");
+  const commitFailure = memberRoleConnection(
+    [
+      {
+        kind: "changed",
+        previous_role: "editor",
+        next_role: "observer",
+        revision: "2",
+      },
+    ],
+    { failures: [{ match: "COMMIT", error: commitError }] },
+  );
+  await assert.rejects(
+    () =>
+      createPostgresMemberRoleChangeRepository(
+        createProvider(commitFailure),
+      ).changeMemberRoleAndRecordAudit(memberRoleInput()),
+    (error) => error === commitError,
+  );
+  assert(commitFailure.calls.some((call) => call.sql === "ROLLBACK"));
+
+  const queryError = new Error("synthetic query failed");
+  const queryAndReleaseFailure = createMockConnection(new Map(), {
+    failures: [
+      {
+        match: "app.change_member_role_and_record_audit",
+        error: queryError,
+      },
+    ],
+    releaseError: new Error("synthetic release failed"),
+  });
+  await assert.rejects(
+    () =>
+      createPostgresMemberRoleChangeRepository(
+        createProvider(queryAndReleaseFailure),
+      ).changeMemberRoleAndRecordAudit(memberRoleInput()),
+    (error) => error === queryError,
+  );
+  assert(queryAndReleaseFailure.calls.some((call) => call.sql === "ROLLBACK"));
+
+  for (const rows of [
+    [
+      {
+        kind: "changed",
+        previous_role: "editor",
+        next_role: "observer",
+        revision: "2",
+      },
+    ],
+    [
+      {
+        kind: "not_found_or_forbidden",
+        previous_role: null,
+        next_role: null,
+        revision: null,
+      },
+    ],
+    [
+      {
+        kind: "last_owner_conflict",
+        previous_role: null,
+        next_role: null,
+        revision: null,
+      },
+    ],
+  ]) {
+    const connection = memberRoleConnection(rows);
+    await createPostgresMemberRoleChangeRepository(
+      createProvider(connection),
+    ).changeMemberRoleAndRecordAudit(memberRoleInput());
+    assert.equal(
+      connection.calls.filter((call) => call.sql === "COMMIT").length,
+      1,
+    );
+    assert(!connection.calls.some((call) => call.sql === "ROLLBACK"));
+  }
+}
+
+function memberRoleConnection(rows, behavior) {
+  return createMockConnection(
+    new Map([["app.change_member_role_and_record_audit", rows]]),
+    behavior,
+  );
+}
+
+function memberRoleInput() {
+  const workspaceUuid = "018f0000-0000-7000-8000-000000000001";
+  const actorUuid = "018f0000-0000-7000-8000-000000000101";
+  const targetUuid = "018f0000-0000-7000-8000-000000000103";
+  return {
+    actorId: `usr_${actorUuid}`,
+    targetActorId: `usr_${targetUuid}`,
+    scope: {
+      kind: "workspace",
+      workspaceId: `ws_${workspaceUuid}`,
+    },
+    nextRole: "observer",
+    authorization: {
+      actorId: `usr_${actorUuid}`,
+      scope: {
+        kind: "workspace",
+        workspaceId: `ws_${workspaceUuid}`,
+      },
+      nextRole: "observer",
+      manageExistingOwner: false,
+    },
+    occurredAt: "2026-09-18T00:00:00.000Z",
+  };
+}
+
 function assertRepositorySupportFactory() {
   const { transaction } = createTransaction();
   const adapters = createRepositorySupportAdapters(transaction);
   assert.equal(typeof adapters.idempotency.ensure, "function");
   assert.equal(typeof adapters.outbox.claim, "function");
+  assert.equal(typeof adapters.multipartUploads.create, "function");
 }
 
 function normalizeSql(sql) {
