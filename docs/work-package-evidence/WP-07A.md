@@ -2,7 +2,7 @@
 work_package: WP-07A
 status: PASS
 baseline: "51f3f2a; workspace was dirty before WP-07A and pre-existing changes were preserved"
-completed_at: "2026-09-20T01:58:00Z"
+completed_at: "2026-09-21T01:56:33Z"
 gate: none
 depends_on:
   - WP-03B
@@ -21,6 +21,7 @@ depends_on:
 - `createMultipartUpload()` 强制单文件 100 MiB、单 draft 20 文件、单 draft 500 MiB 总量上限；对象 key 由服务端生成，客户端不能传 bucket/key。
 - `signMultipartUploadPart()` 只为指定 `objectKey + uploadId + partNumber` 生成短时 `PUT` URL，默认 15 分钟。
 - `confirmMultipartUploadPart()` 通过 storage port 读取服务端已上传 part 元数据，并拒绝篡改 key、part、size、checksum。
+- 2026-09-21 时间确定性回归修复：`confirmMultipartUploadPart()` 新增 `now?: () => Date`，与 create/sign/complete/abort/recover 一致；函数开头一次性读取时钟并传给 `repository.getActive()`，Invalid Date 或 throwing clock 返回稳定 `DEPENDENCY_UNAVAILABLE / invalid_upload_clock`，不暴露堆栈且不放宽 expiry 判断。
 - `completeMultipartUpload()` 使用服务端确认的 part 列表和 storage complete 结果，重复 complete 返回同一已完成结果。
 - `abortMultipartUpload()` 对取消幂等；已完成上传不能再取消。
 - `recoverMultipartUpload()` 对已过期但仍存在有效 part 的上传延长会话并保留成功 part；无有效 part 明确拒绝。
@@ -29,13 +30,13 @@ depends_on:
 
 ## 变更文件
 
-- `apps/control-api/src/index.ts`：新增 multipart 上传 use-case、storage port、S3/MinIO SigV4 adapter 和错误信封。
+- `apps/control-api/src/index.ts`：新增 multipart 上传 use-case、storage port、S3/MinIO SigV4 adapter 和错误信封；本次修复为 `confirmMultipartUploadPart()` 增加可注入时钟和坏时钟关闭式失败。
 - `packages/database/migrations/0008_upload_multipart.up.sql` / `down.sql`：新增 `app.multipart_uploads`、`app.multipart_upload_parts`、RLS、不可变/append-only 触发器和索引。
 - `packages/database/src/index.ts`：新增 upload opaque ID 映射、multipart upload repository、repository support factory 出口，migration head 更新为 `0008_upload_multipart`。
 - `packages/database/scripts/integration-test.mjs`：授予 runtime role 新表权限。
 - `packages/database/scripts/verify-public-api.mjs`：新增 multipart repository public API probe。
 - `packages/database/scripts/verify-tenant-core.mjs`：将新表纳入 RLS 表清单，并增加 multipart 上传插入、完成、跨租户不可见、key 不可变和 part append-only 集成验证。
-- `tests/control-api/upload-multipart.test.ts`：新增 create/sign/confirm/complete/abort/recover、权限和篡改拒绝用例。
+- `tests/control-api/upload-multipart.test.ts`：新增 create/sign/confirm/complete/abort/recover、权限和篡改拒绝用例；本次修复让 confirm 正向和篡改负例显式传固定时钟，并覆盖 Invalid Date / throwing clock。
 
 ## 契约和衔接
 
@@ -50,6 +51,14 @@ Control API use-case/port：
 - `MultipartUploadRepository`
 - `MultipartObjectStoragePort`
 - `createS3MultipartObjectStoragePort`
+
+`confirmMultipartUploadPart()` 输入新增：
+
+```ts
+readonly now?: () => Date
+```
+
+该时钟只在一次 confirm 操作开头读取一次。固定时钟回归覆盖说明：测试 fixture 仍使用 `2026-09-20T00:00:00.000Z` 创建上传；即使系统真实日期跨到 2026-09-21，正常 confirm 和篡改负例仍使用固定 `now` 断言，不依赖真实系统时间，也不延长 TTL。
 
 对象 key 格式：
 
@@ -84,11 +93,16 @@ uploading -> uploaded | cancelled
 | --- | --- | --- |
 | `./scripts/check-work-package-ready.sh WP-07A` | PASS | `READY WP-07A`; dependencies `WP-03B`/`WP-02D` PASS |
 | `pnpm vitest run tests/control-api/upload-multipart.test.ts tests/control-api/rbac-middleware.test.ts` | PASS | 18 tests passed |
+| `pnpm vitest run tests/control-api/upload-multipart.test.ts` | PASS | 4 tests passed; fixed-clock confirm regression and invalid/throwing clock failures covered |
+| `pnpm --filter @modular-mcp/control-api build` | PASS | TypeScript build passed |
 | `pnpm --filter @modular-mcp/database build` | PASS | `database public API verification passed` |
 | `pnpm --filter @modular-mcp/database test:integration` | PASS | migration `0008_upload_multipart` applied/rolled back/reapplied; `PASS multipart upload rules`; tenant-core verification passed |
 | `pnpm infra:up` | PASS | MinIO bucket `mcp-dev-artifacts` initialized private |
 | MinIO multipart smoke via `createS3MultipartObjectStoragePort` | PASS | created multipart upload, presigned PUT uploaded 1 part, listed 1 part, completed with server checksum |
-| `pnpm verify:affected` | PASS | format, lint, typecheck, 219 unit tests, contract checks, build, dependency scan, secret scan all passed |
+| `pnpm verify:affected` | PASS | format, lint, typecheck, 278 unit tests, contract checks, build, dependency scan, secret scan all passed |
+| `pnpm dependency:scan` | PASS | pinned dependency policy passed |
+| `pnpm secret:scan` | PASS | no unallowlisted secret patterns found |
+| `git diff --check` | PASS | no whitespace errors |
 
 ## 验收标准核对
 
@@ -99,6 +113,8 @@ uploading -> uploaded | cancelled
 - [x] 对象 key 服务端生成且包含 workspace/project/environment/draft/upload 隔离维度。
 - [x] 签名 URL 短时且只写指定 part。
 - [x] 每次上传操作都做权限检查。
+- [x] confirm 操作使用可注入固定时钟，系统真实日期跨日后正常确认不被误判为 expired。
+- [x] Invalid Date / throwing clock 对 confirm 关闭式失败，不暴露内部异常。
 - [x] MinIO smoke 和 `pnpm verify:affected` PASS。
 
 ## 全局约束核对
@@ -108,6 +124,7 @@ uploading -> uploaded | cancelled
 - [x] 未修改已合并迁移；新增 `0008_upload_multipart` expand migration。
 - [x] 未升级依赖或加入云 SDK；S3/MinIO adapter 使用 Node 标准库和 `fetch`。
 - [x] 测试未跳过、未弱化断言、未扩大超时。
+- [x] 未修改 WP-14B 产品代码、视觉基线或 Playwright 测试。
 
 ## 风险和遗留项
 

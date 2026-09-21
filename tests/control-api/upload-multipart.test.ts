@@ -302,7 +302,7 @@ async function createStartedUpload(
 }
 
 describe("multipart upload use-cases", () => {
-  it("creates isolated object keys, signs stable part URLs, confirms parts, and completes idempotently", async () => {
+  it("creates isolated object keys, signs stable part URLs, confirms parts with a fixed clock, and completes idempotently", async () => {
     const { context, repository, storage, upload } =
       await createStartedUpload();
     expect(upload.objectKey).toContain(encodeURIComponent(workspaceId));
@@ -344,6 +344,7 @@ describe("multipart upload use-cases", () => {
       repository,
       storage,
       authorize: authorizeControlPlane,
+      now,
     });
     expect(confirmed.ok).toBe(true);
     expect(confirmed.value.upload.parts).toHaveLength(1);
@@ -404,7 +405,7 @@ describe("multipart upload use-cases", () => {
     });
   });
 
-  it("rejects tampered key, part, size, and checksum", async () => {
+  it("rejects tampered key, part, size, checksum, and invalid clocks", async () => {
     const { context, repository, storage, upload } =
       await createStartedUpload();
     storage.parts.set("1", part);
@@ -442,10 +443,66 @@ describe("multipart upload use-cases", () => {
         repository,
         storage,
         authorize: authorizeControlPlane,
+        now,
         ...request,
       });
       expect(result.ok).toBe(false);
+      expect(result.error.body.error.category).not.toBe("upload_expired");
     }
+
+    const invalidClock = await confirmMultipartUploadPart({
+      actorContext: context,
+      scope,
+      uploadId,
+      objectKey: upload.objectKey,
+      partNumber: 1,
+      sizeBytes: 12,
+      checksumSha256: part.checksumSha256,
+      repository,
+      storage,
+      authorize: authorizeControlPlane,
+      now: () => new Date("not-a-date"),
+    });
+    expect(invalidClock).toMatchObject({
+      ok: false,
+      error: {
+        status: 503,
+        body: {
+          error: {
+            code: "DEPENDENCY_UNAVAILABLE",
+            category: "invalid_upload_clock",
+          },
+        },
+      },
+    });
+
+    const throwingClock = await confirmMultipartUploadPart({
+      actorContext: context,
+      scope,
+      uploadId,
+      objectKey: upload.objectKey,
+      partNumber: 1,
+      sizeBytes: 12,
+      checksumSha256: part.checksumSha256,
+      repository,
+      storage,
+      authorize: authorizeControlPlane,
+      now: () => {
+        throw new Error("synthetic clock failure");
+      },
+    });
+    expect(throwingClock).toMatchObject({
+      ok: false,
+      error: {
+        status: 503,
+        body: {
+          error: {
+            code: "DEPENDENCY_UNAVAILABLE",
+            category: "invalid_upload_clock",
+          },
+        },
+      },
+    });
   });
 
   it("enforces draft limits and recovers valid expired parts", async () => {

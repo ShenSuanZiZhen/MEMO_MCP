@@ -332,21 +332,26 @@ describe("production module gate", () => {
 
   it("rejects non-canonical or non-64-byte Ed25519 signatures", () => {
     const signed = signedManifest();
+    const invalidAlphabetSignature = `+${signed.signature.value.slice(1)}`;
+    expect(invalidAlphabetSignature).not.toBe(signed.signature.value);
     const invalidValues = [
-      "",
-      `${signed.signature.value}=`,
-      ` ${signed.signature.value}`,
-      `${signed.signature.value}\n`,
-      signed.signature.value.replaceAll("-", "+"),
-      Buffer.alloc(63).toString("base64url"),
-      Buffer.alloc(65).toString("base64url"),
-    ];
+      ["empty", ""],
+      ["padding", `${signed.signature.value}=`],
+      ["leading-space", ` ${signed.signature.value}`],
+      ["trailing-newline", `${signed.signature.value}\n`],
+      ["invalid-plus", invalidAlphabetSignature],
+      ["invalid-slash", `/${signed.signature.value.slice(1)}`],
+      ["sixty-three-bytes", Buffer.alloc(63).toString("base64url")],
+      ["sixty-five-bytes", Buffer.alloc(65).toString("base64url")],
+    ] as const;
 
-    for (const value of invalidValues) {
+    for (const [name, value] of invalidValues) {
+      expect(value, name).not.toBe(signed.signature.value);
       expect(
         verifier.verifyModuleSignature({
           manifest: { ...signed, signature: { ...signed.signature, value } },
         }),
+        name,
       ).toMatchObject({ ok: false });
     }
   });

@@ -2433,6 +2433,36 @@ function uploadDependencyUnavailable(): ControlApiUploadFailure {
   );
 }
 
+function readUploadClock(
+  now: (() => Date) | undefined,
+):
+  | { readonly ok: true; readonly value: Date }
+  | { readonly ok: false; readonly error: ControlApiUploadFailure } {
+  try {
+    const value = now?.() ?? new Date();
+    if (!(value instanceof Date) || !Number.isFinite(value.getTime())) {
+      return {
+        ok: false,
+        error: uploadFailure(
+          503,
+          "DEPENDENCY_UNAVAILABLE",
+          "invalid_upload_clock",
+        ),
+      };
+    }
+    return { ok: true, value };
+  } catch {
+    return {
+      ok: false,
+      error: uploadFailure(
+        503,
+        "DEPENDENCY_UNAVAILABLE",
+        "invalid_upload_clock",
+      ),
+    };
+  }
+}
+
 function mapUploadRepositoryError(
   error: MultipartUploadRepositoryError,
 ): ControlApiUploadFailure {
@@ -2838,6 +2868,7 @@ export async function confirmMultipartUploadPart(input: {
   readonly storage: MultipartObjectStoragePort;
   readonly authorize: ControlPlaneAuthorizer;
   readonly limits?: Partial<MultipartUploadLimits>;
+  readonly now?: () => Date;
 }): Promise<
   MultipartUploadUseCaseResult<{
     readonly upload: MultipartUploadRecord;
@@ -2862,12 +2893,17 @@ export async function confirmMultipartUploadPart(input: {
     return { ok: false, error: partNumber };
   }
 
+  const operationNow = readUploadClock(input.now);
+  if (!operationNow.ok) {
+    return operationNow;
+  }
+
   let found: MultipartUploadRepositoryResult<MultipartUploadRecord>;
   try {
     found = await input.repository.getActive({
       scope: authorized.value,
       uploadId: input.uploadId,
-      now: new Date().toISOString(),
+      now: operationNow.value.toISOString(),
     });
   } catch {
     return { ok: false, error: uploadDependencyUnavailable() };
